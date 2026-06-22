@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git add:*)",
+      "Bash(git commit:*)", "Bash(git switch:*)", "Bash(git checkout -b:*)",
+      "Bash(git branch:*)", "Bash(git pull:*)",
+      "Bash(npm test:*)", "Bash(npm run lint:*)", "Bash(npm run dev:*)",
+      "Bash(npx ait:*)", "Read", "Edit", "Write"
+    ],
+    "ask": [
+      "Bash(git push:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)", "Bash(git push -f:*)",
+      "Bash(git push * main:*)", "Bash(git push origin main:*)",
+      "Bash(git push * develop:*)", "Bash(git push origin develop:*)",
+      "Bash(git add .env:*)", "Read(./.env)", "Read(./**/*.key)",
+      "Bash(curl:*)", "Bash(rm -rf:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git push:*)",
+        "hooks": [
+          { "type": "command",
+            "command": "cd backend && npm test --silent && cd ../frontend && npm test --silent" }
+        ]
+      }
+    ]
+  },
+  "env": { "NODE_ENV": "development" }
+}
