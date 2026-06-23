@@ -1,3 +1,10 @@
+---
+name: Bug
+about: 버그 수정
+title: "[Bug] "
+labels: bug
+---
+
 ## 🐞 버그 설명
 
 발생한 버그를 간단히 설명해주세요.

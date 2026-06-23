@@ -1,3 +1,10 @@
+---
+name: Feature
+about: 새로운 기능 추가
+title: "[F-00X] "
+labels: feature
+---
+
 ## ✨ 기능 설명
 
 추가하려는 기능을 간단히 설명해주세요.

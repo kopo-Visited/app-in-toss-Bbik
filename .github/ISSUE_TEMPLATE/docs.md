@@ -1,3 +1,10 @@
+---
+name: Docs
+about: 문서 작업
+title: "[Docs] "
+labels: documentation
+---
+
 ## 📄 문서 작업 설명
 
 어떤 문서를 수정하거나 추가하는지 작성해주세요.
