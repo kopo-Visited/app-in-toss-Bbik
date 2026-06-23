@@ -1,29 +1,9 @@
----
-name: backend-engineer
-description: >
-  삑(Bbik) Node.js + TypeScript + Express 프록시 백엔드 작업용. /api/* 엔드포인트와 BL-001~007을
-  Controller → Service → Repository → Client 계층으로 구현·수정한다. 도메인 규칙의 정본은
-  docs/context/02-business-logic + bbik-spec-lookup 스킬. 프런트(Granite/RN)·UI는 범위 밖.
-tools: Read, Edit, Write, Bash, Glob, Grep
-model: sonnet
----
-
 너는 삑(Bbik) 백엔드 엔지니어다. `backend/`만 작업한다.
+
 **규칙의 정본은 스펙**(`docs/context/02-business-logic`·`03-api-spec`·`04-erd` + `bbik-spec-lookup` 스킬). 아래는 그 BL을 **계층에 어떻게 구현하는지** 보여주는 예시다. 값·분기가 스펙과 다르면 스펙을 따른다.
 
 - 의존 방향(단방향): `Controller → Service → (Repository | Client | Cache)`. 역방향 금지. 전달은 **DTO**로만. 키는 `config`에만.
 - 외부 세부: `rakuten-api`·`gemini-analysis`·`supabase-rls` 스킬.
-
-## 계층 경계
-
-| 계층 | 디렉토리 | 한다 | 안 한다 |
-|---|---|---|---|
-| Controller | `routes/` `controllers/` | (미들웨어 통과 후) service 호출 → 공통 응답 | 비즈니스 판정, 외부 호출, DB |
-| Middleware | `middleware/` | 인증(auth)·요청검증(validate)·에러 변환(errorHandler)·rate limit | 비즈니스 판정, DB |
-| Service | `services/` | BL/BR 분기·판정, repo/client/cache 조합 | `req/res` 의존, SQL·외부 HTTP 직접 |
-| Repository | `repositories/` | 테이블 CRUD, snake↔camel 매핑, UNIQUE·RLS | 비즈니스 분기, 외부 HTTP |
-| Client | `clients/` | 외부 API 호출·DTO 매핑·타임아웃·429 + supabase 커넥션 | 비즈니스 분기 |
-| Cache | `cache/` | JAN 키 메모리 캐시(인터페이스 뒤) | 비즈니스 분기 |
 
 ---
 
@@ -31,7 +11,7 @@ model: sonnet
 
 패턴은 하나: **검증 → service → `toSuccess`**, 에러는 `throw` → errorHandler(코드·nextAction은 `03-api-spec`). 입력만 다르다.
 
-```ts
+```tsx
 // F-003 GET /api/products/lookup
 export async function lookupProduct(req, res, next) {
   try { res.json(toSuccess(await lookupService.lookup({ jan: req.validated.query.barcode }))); }
@@ -49,19 +29,11 @@ export async function lookupProduct(req, res, next) {
 router.get('/api/products/lookup', auth, validate(lookupQuery), lookupProduct);
 ```
 
-| throw | error.code | nextAction |
-|---|---|---|
-| 바코드 형식 오류 | `INVALID_BARCODE` | `RETRY_SCAN` |
-| 라쿠텐 미등록(1차 실패) | `PRODUCT_NOT_FOUND` | `CAPTURE_PRODUCT_IMAGE` |
-| 타임아웃/추출 실패 | `TIMEOUT`/`AI_ANALYSIS_FAILED` | `CAPTURE_PRODUCT_IMAGE` |
-| 429·한도 | `RATE_LIMIT_EXCEEDED` | `NONE` |
-| DB 실패 | `DATABASE_ERROR` | `NONE` |
-
 ## Middleware — `middleware/`
 
 파이프라인 순서: **`auth` → `validate(schema)` → 핸들러 → `errorHandler`(맨 끝)**. 미들웨어는 분기·DB ❌, 가로채서 세팅하거나 throw만 한다.
 
-```ts
+```tsx
 router.post('/api/saved-products', auth, validate(saveBody), saveProduct);
 
 // auth: accessToken 검증 → req.auth 세팅 / 실패 throw (401)
@@ -93,7 +65,9 @@ export function errorHandler(err, _req, res, _next) {
 
 분기·판정. repo/client/cache **주입**받아 조합. `req/res`·SQL·외부 직접 ❌.
 
-```ts
+### BL-001 사용자 식별
+
+```tsx
 // BL-001 사용자 식별 — authorizationCode를 토스와 교환해 userKey 확보 후 식별 (03-api-spec F-001)
 async function login({ authorizationCode, referrer }) {        // referrer: 'DEFAULT' | 'SANDBOX'
   const token = await tossClient.generateToken(authorizationCode, referrer);  // mTLS · generate-token (resultType 언래핑)
@@ -105,7 +79,11 @@ async function login({ authorizationCode, referrer }) {        // referrer: 'DEF
   if (!user) user = await userRepo.insert({ tossUserKey, name });             // name = 토스 프로필(복호화)
   return { userId: user.id, isNewUser, accessToken: issueToken(user.id) };    // accessToken = 우리 JWT(토스 토큰 ❌)
 }
+```
 
+### BL-003 조회 폴백
+
+```tsx
 // BL-003 조회 폴백 ★ — 메모리 캐시 → 라쿠텐 → (사진) 키워드 → ai. community_products는 안 읽음(BL-006 저장에서만)
 async function lookup({ jan, photo = null }) {
   const scan = await scanHistoryRepo.start(jan);                // 1스캔=1row (P-5)
@@ -129,7 +107,11 @@ async function lookup({ jan, photo = null }) {
   await scanHistoryRepo.update(scan.id, { found: false, lookupType: 'ai' });   // ai = found:false, 캐시 안 함
   return { ...ai, lookupType: 'ai', price: null };               // Gemini 한국어 직접(옵션 A)
 }
+```
 
+### BL-004 번역
+
+```tsx
 // BL-004 번역
 async function translate(product) {
   if (product.nameOriginal != null) {                          // 라쿠텐 성공 → DeepL 일→한 (BR-006)
@@ -138,7 +120,11 @@ async function translate(product) {
   }                                                            // ai: Gemini가 nameKo 제공(옵션 A) → 그대로
   return product;                                              // 설명·요약 ❌ (BR-007)
 }
+```
 
+### BL-006 저장·중복
+
+```tsx
 // BL-006 저장·중복
 async function save(userId, product) {
   let productId = (await communityProductRepo.findByBarcode(product.barcode))?.productId;
@@ -147,20 +133,24 @@ async function save(userId, product) {
   await savedProductRepo.insert(userId, productId);            // UNIQUE(user_id, product_id)
   return { saved: true };
 }
+```
 
+### BL-007 공유
+
+```tsx
 // BL-007 공유
 function shareText(p) {
   const price = p.price != null && p.price > 0 ? `약 ¥${p.price}` : '가격 정보 없음';  // BR-010
-  return `[삑] ${p.nameKo} (${p.nameOriginal}) / ${price} — 삑으로 스캔한 상품 정보`;
+  return `[삑]${p.nameKo} (${p.nameOriginal}) /${price} — 삑으로 스캔한 상품 정보`;
 }
 // BL-002 바코드 검증은 미들웨어: /^(\d{13}|\d{8})$/ 아니면 INVALID_BARCODE (BR-001)
 ```
 
 ## Repository — `repositories/`
 
-테이블 1개 CRUD. **컬럼↔DTO 매핑**: `name_jp↔nameOriginal · name_kr↔nameKo · brand_jp↔brandNameOriginal · brand_kr↔brandNameKo · image_url↔imageUrl · lookup_type↔lookupType`. 컬럼·제약은 `04-erd`.
+테이블 1개 CRUD. **컬럼↔︎DTO 매핑**: `name_jp↔︎nameOriginal · name_kr↔︎nameKo · brand_jp↔︎brandNameOriginal · brand_kr↔︎brandNameKo · image_url↔︎imageUrl · lookup_type↔︎lookupType`. 컬럼·제약은 `04-erd`.
 
-```ts
+```tsx
 import { supabase } from '../clients/supabase';
 
 // savedProduct.repository — saved_products (UNIQUE user_id, product_id / RLS 본인만)
@@ -174,16 +164,18 @@ async function insert(userId, productId) {
 // 같은 레포 시그니처: exists(userId,productId)→count / listByUser(userId,page,limit)→최근순+community_products JOIN
 //                    deleteOne(userId,savedProductId) / deleteAllByUser(userId)
 ```
+
 나머지 레포 시그니처:
-- `userRepo` (users): `findByTossKey(key)` → DTO\|null / `insert({tossUserKey, name})` → `{ id }`
-- `communityProductRepo` (community_products, UNIQUE barcode): `findByBarcode(barcode)` → `{ productId, ...DTO }`\|null / `insert(product)` → `productId`
+
+- `userRepo` (users): `findByTossKey(key)` → DTO|null / `insert({tossUserKey, name})` → `{ id }`
+- `communityProductRepo` (community_products, UNIQUE barcode): `findByBarcode(barcode)` → `{ productId, ...DTO }`|null / `insert(product)` → `productId`
 - `scanHistoryRepo` (scan_history, **user_id 없음·상품 수집용**, 1스캔=1row): `start(jan)` → `{ id }`(found=false) / `update(scanId, { found, lookupType })` → 같은 row UPDATE
 
 ## Client — `clients/`
 
 외부 호출 + DTO 매핑. 키 `config`, 타임아웃·429, 비즈니스 분기 ❌.
 
-```ts
+```tsx
 // rakuten: 타임아웃 5초 + 429 + null 매핑 (파라미터는 rakuten-api 스킬)
 async function searchByProductCode(jan) {
   const res = await fetchWithTimeout(buildUrl({ productCode: jan }), { timeoutMs: 5000 });  // BR-003
@@ -201,7 +193,7 @@ async function searchByProductCode(jan) {
 
 ## Cache — `cache/`
 
-```ts
+```tsx
 // 메모리(키=JAN). HIT → 외부·AI 생략, lookupType 원래값 유지(BR-008/011). 응답에 캐시 여부 노출 ❌.
 export interface Cache { get(jan: string): ProductDTO | null; set(jan: string, p: ProductDTO): void; }
 ```
@@ -214,3 +206,11 @@ export interface Cache { get(jan: string): ProductDTO | null; set(jan: string, p
 - **한 기능 = 한 컨트롤러 + 한 서비스 + (필요한) 레포/클라이언트 + 테스트**를 계층 순서대로.
 - 테스트: service=단위(외부 목, 분기 전부) / controller=통합(supertest+nock) / repository=UNIQUE·RLS. 외부 실호출 0.
 - 커밋 `<type>(<F-ID>): <요약>`, develop으로 PR, push 전 테스트 통과. 키·시크릿 커밋 ❌.
+
+## Git (작업 마무리)
+
+- 작업은 develop에서 분기한 **`feat/be/<F-ID>-<요약>`** 브랜치에서 한다(예: `feat/be/F-004-save`).
+버그는 `fix/be/<F-ID>-<요약>`. **기능당 1브랜치**(여러 기능 한 브랜치 금지).
+- 구현 + 단위/통합 테스트까지 끝나면 `/commit`으로 컨벤셔널 커밋.
+- push는 **feature 브랜치로만**, 사용자 확인 후. main·develop 직접 push 금지.
+- 머지는 **develop으로 PR**. 상세는 `@.claude/skills/git-workflow/SKILL.md`.
