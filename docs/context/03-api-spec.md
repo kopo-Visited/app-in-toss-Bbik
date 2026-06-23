@@ -101,8 +101,8 @@
 | API명 | 토스 로그인 API |
 | Method | POST |
 | Endpoint | `/api/auth/toss/login` |
-| 인증 필요 여부 | 불필요 |
-| 연동 | 토스 SDK, Supabase |
+| 인증 필요 여부 | 불필요(이 API가 우리 인증을 발급) |
+| 연동 | 앱인토스 OAuth(`generate-token`·`login-me`, mTLS), Supabase |
 
 ### 5.2 Request
 
@@ -112,7 +112,8 @@ POST /api/auth/toss/login
 
 ```json
 {
-  "tossUserKey": "{toss_user_key}"
+  "authorizationCode": "{authorization_code}",
+  "referrer": "DEFAULT"
 }
 ```
 
@@ -120,29 +121,54 @@ POST /api/auth/toss/login
 
 | 필드 | 타입 | 필수 여부 | 설명 |
 | --- | --- | --- | --- |
-| `tossUserKey` | String | 필수 | 토스 SDK에서 전달받은 사용자 식별값 |
+| `authorizationCode` | String | 필수 | 토스 SDK `appLogin()`이 반환한 인가코드. **유효 10분·일회성**(재사용 시 `invalid_grant`) |
+| `referrer` | String(enum) | 필수 | `appLogin()`이 함께 반환한 referrer. **`'DEFAULT'` 제 토스앱** `generate-token`에 그대로 전달 |
 
-### 5.4 Response
+> 변경: 기존 `tossUserKey`(프론트 전달)는 불가. userKey는 백엔드가 `login-me`로만 얻으므로 요청은 `authorizationCode`를 전달한다.
+> 
+
+### 5.4 내부 처리 흐름 (서버 ↔ 앱인토스, **mTLS 필수**)
+
+Base URL: `https://apps-in-toss-api.toss.im`
+
+1. **토큰 발급** — `POST /api-partner/v1/apps-in-toss/user/oauth2/generate-token`, body `{ authorizationCode, referrer }`
+→ `{ resultType: "SUCCESS", success: { accessToken(1h), refreshToken(14d), tokenType, expiresIn, scope } }` (응답은 `resultType`/`success` 래퍼 → `success` 언래핑)
+2. **사용자 조회** — `GET /api-partner/v1/apps-in-toss/user/oauth2/login-me`, header `Authorization: Bearer {accessToken}`
+→ `{ userKey(number), scope, agreedTerms, name, phone, birthday, ci, gender ... }` (개인정보 필드는 **암호문**)
+3. **개인정보 복호화** — `name`을 콘솔 발급 키 + AAD로 **AES-256-GCM 복호화** → `users.name`에 저장
+4. **식별/등록(BL-001)** — `String(userKey)`로 `users` 조회/등록(`users.toss_user_key`) → **자체 JWT** 발급
+
+주의사항:
+
+- **mTLS 인증서 필수** — 없으면 `generate-token` 호출 불가(integration-process 문서의 발급 절차).
+- **응답 래퍼** — `generate-token`은 `{ resultType, success }` 구조. `success`를 까서 매핑한다.
+- **`userKey`는 number** — 예: `443731104`. `users.toss_user_key`에는 **문자열로 보관** 권장.
+- **개인정보는 전부 암호문** — `name`/`phone`/`birthday`/`ci` 등은 암호화 제공. **복호화 키·AAD는 콘솔 발급분을 `config`(환경변수)로 보관**, AES-256-GCM 복호화. (삑은 `name`만 채움)
+- 토스 `accessToken`/`refreshToken`은 **서버에서만** 보관, 클라이언트 전달 금지.
+- `scope`에 정의되지 않은 값이 와도 예외 없이 처리(2026-01-02 `user_key` 추가 등 전방호환).
+
+### 5.5 Response
 
 ```json
 {
   "success": true,
   "data": {
     "userId": "{user_id}",
-    "tossUserKey": "{toss_user_key}",
     "isNewUser": false,
-    "accessToken": "{access_token}"
+    "accessToken": "{our_jwt_access_token}"
   }
 }
 ```
 
-### 5.5 예외 처리
+### 5.6 예외 처리
 
 | 코드 | 원인 | 처리 방법 |
 | --- | --- | --- |
 | `F-001-E1` | 토스 앱 미설치 | 토스 앱 설치 유도 |
 | `F-001-E2` | 네트워크 오류 | 네트워크 확인 메시지 표시 |
 | `F-001-E3` | 인증 취소 | 로그인 화면으로 복귀 |
+| `F-001-E4` | 인가코드 만료·재사용(`invalid_grant`) | 재로그인 유도 |
+| `UNAUTHORIZED` | `generate-token`/`login-me` 실패 | 인증 실패 응답 |
 
 ---
 
