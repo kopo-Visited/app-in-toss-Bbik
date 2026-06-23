@@ -1,0 +1,11 @@
+{
+  "name": "bbik-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "삑(Bbik) 프론트엔드 — 앱인토스 Granite (구현은 FE 단계에서)",
+  "scripts": {
+    "dev": "echo \"frontend dev not configured yet\" && exit 0",
+    "lint": "echo \"no linter configured yet\" && exit 0",
+    "test": "echo \"no tests yet\" && exit 0"
+  }
+}
