@@ -1,5 +1,23 @@
 # secrets / credentials
 .env
 .env.*
+!.env.example
 *.key
 *.pem
+
+# dependencies
+node_modules/
+
+# logs
+*.log
+npm-debug.log*
+
+# build / coverage
+dist/
+build/
+coverage/
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
