@@ -24,3 +24,16 @@ export const saveProductSchema = z.object({
     lookupType: z.enum(['barcode', 'keyword', 'ai']),
   }),
 });
+
+/** GET /api/saved-products?page=&limit= (03-api-spec §13.3) */
+export const listQuerySchema = z.object({
+  query: z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(100).default(20),
+  }),
+});
+
+/** DELETE /api/saved-products/:savedProductId (PK uuid) */
+export const deleteParamsSchema = z.object({
+  params: z.object({ savedProductId: z.string().uuid() }),
+});
