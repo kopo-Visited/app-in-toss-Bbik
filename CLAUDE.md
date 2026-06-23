@@ -111,11 +111,15 @@ claude plugin install figma@claude-plugins-official
 ---
 
 ## 7. Git 규칙
-- 브랜치 전략: **feature/* → develop → main** (Git Flow 기반).
-  - 기능은 develop에서 분기: `feat/F-003-lookup`, `fix/F-002-scan`.
+- 브랜치 전략: **feature → develop → main** (Git Flow 기반).
   - PR은 **항상 develop으로**. main은 develop → main 릴리스 PR로만 머지.
   - **main·develop 직접 커밋/푸시 금지.** feature→main 직접 PR 금지. force-push 금지.
-- 커밋: `<type>(<F-ID|BL-ID>): <요약>` 예) `feat(F-003): 라쿠텐 2단계 폴백 구현`
+- 브랜치 네이밍 (영역+기능, **기능당 1브랜치**):
+  - 백엔드 기능 `feat/be/<F-ID>-<요약>` (예: `feat/be/F-004-save`)
+  - 프론트 기능 `feat/fe/<F-ID>-<요약>` (예: `feat/fe/F-002-scan`)
+  - 버그 `fix/be|fe/<F-ID>-<요약>` · 문서 `docs/<주제>` · 설정 `chore/<주제>`
+  - 한 브랜치에 여러 기능 섞지 않는다.
+- 커밋: `<type>(<F-ID|BL-ID|주제>): <요약>` 예) `feat(F-003): 라쿠텐 2단계 폴백 구현`
   (type: feat/fix/refactor/test/docs/chore)
 - push 전 테스트 통과 필수(husky pre-push + settings 훅). **push는 사용자 확인 후, feature 브랜치만.**
 - 키·시크릿 커밋 금지(`.env`, `*.key`). 1커밋=1관심사.
