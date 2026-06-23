@@ -179,13 +179,97 @@ claude plugin install figma@claude-plugins-official  # → /mcp 에서 인증
 
 ## 7. Git 워크플로 (feature → develop → main)
 ```
-feat/F-003-lookup ──PR──▶ develop ──릴리스 PR──▶ main
+feat/be/F-003-lookup ──PR──▶ develop ──릴리스 PR──▶ main
 ```
-- 기능은 develop에서 분기(`feat/F-003-lookup`), PR은 **develop으로**. main은 릴리스 PR로만.
-- **main·develop 직접 push 금지**(settings deny + 권장: GitHub branch protection). force-push 금지.
-- 커밋: `<type>(<F-ID>): <요약>` 예) `feat(F-003): 라쿠텐 2단계 폴백 구현`.
+- 기능은 develop에서 분기, PR은 **develop으로**. main은 릴리스 PR로만.
+- **main·develop 직접 push 금지**(settings deny + GitHub branch protection). force-push 금지.
 - push 전 테스트 통과 필수(husky pre-push). 키·시크릿 커밋 금지.
-- AI로 작업 시 `/commit`(점검→테스트→커밋), `/implement-feature F-00X`, `/run-tests` 사용.
+
+### 7.1 커밋·브랜치 타입 (feat / fix / docs / chore)
+| 타입 | 뜻 | 언제 쓰나 | 예시 |
+| --- | --- | --- | --- |
+| `feat` | 기능 추가 | 새로운 기능을 만들 때 | `feat(F-004): 저장 기능 추가` |
+| `fix` | 버그 수정 | 잘못 동작하는 걸 고칠 때 | `fix(F-003): 라쿠텐 타임아웃 처리` |
+| `docs` | 문서 | README·스펙 등 문서만 바꿀 때 | `docs(readme): 구조 설명 추가` |
+| `chore` | 잡일·설정 | 빌드·설정·템플릿 등 코드 기능과 무관한 작업 | `chore(template): 이슈 템플릿 추가` |
+
+> `feat` vs `fix` → 새로 만들면 feat, 있던 걸 고치면 fix /
+> `docs` vs `chore` → 문서 내용이면 docs, 설정·빌드·템플릿이면 chore
+
+### 7.2 브랜치 네이밍
+
+**AI(에이전트)가 기능 구현 시** — 영역(be/fe) + 기능ID, 기능당 1브랜치
+| 작업 | 형식 | 예시 |
+| --- | --- | --- |
+| 백엔드 기능 | `feat/be/<F-ID>-<요약>` | `feat/be/F-004-save` |
+| 프론트 기능 | `feat/fe/<F-ID>-<요약>` | `feat/fe/F-002-scan` |
+| 버그 | `fix/be\|fe/<F-ID>-<요약>` | `fix/be/F-003-timeout` |
+
+**사람이 직접 작업 시** — 문서·설정 등 F-ID 없는 작업은 `<타입>/<주제>`
+| 작업 종류 | 형식 | 예시 |
+| --- | --- | --- |
+| 문서 작성·수정 | `docs/<주제>` | `docs/erd-update`, `docs/readme-fix` |
+| 설정·잡일 | `chore/<주제>` | `chore/github-templates`, `chore/husky-config` |
+| 기능 추가 | `feat/<주제>` | `feat/login-flow` |
+| 버그 수정 | `fix/<주제>` | `fix/scan-error` |
+
+> `<주제>`는 무슨 작업인지 짧게(영어 소문자, 단어는 `-`로 연결). 사람 작업은 `be/fe`·F-ID 생략 가능.
+
+### 7.3 커밋 메시지 규칙
+- 형식: `<type>(<scope>): <요약>` (scope = F-ID/BL-ID 또는 주제)
+- type: `feat` `fix` `refactor` `test` `docs` `chore`
+- ⚠️ 콜론은 붙여서(`chore:` O, `chore :` X), scope 필수.
+- 예시:
+  - `feat(F-004): 저장 중복 판정(BR-009) 추가`
+  - `fix(F-003): 라쿠텐 429 시 캐시 폴백 처리`
+  - `docs(readme): 프로젝트 구조·동작 흐름 작성`
+  - `chore(template): 이슈 템플릿에 프론트매터 추가`
+
+### 7.4 사람이 직접 작업하는 법 (팀원용 — 표만 보고 따라하기)
+
+**A. 이슈로 시작하는 경우 (기능·버그)** — 브랜치는 이슈에서 만든다
+> 이슈 화면 우측 **Development → Create a branch**를 누르면 GitHub이 브랜치를 만들고
+> `git fetch`+`git switch` 체크아웃 명령어를 제공한다. 그걸 복사해 실행하면 끝(직접 생성 불필요).
+
+| 순서 | 무엇을 | 명령어 |
+| --- | --- | --- |
+| 1 | 이슈에서 브랜치 생성 후 제공된 명령 실행 | `git fetch origin && git switch <이슈가 만든 브랜치>` |
+| 2 | 변경 확인(키 섞였나) | `git status` |
+| 3 | 스테이징 | `git add .` |
+| 4 | 커밋(규칙대로) | `git commit -m "feat(F-004): 저장 기능 추가"` |
+| 5 | 원격 push | `git push` |
+| 6 | PR 생성 | GitHub에서 base=`develop`로 PR (본문에 `closes #이슈번호`) |
+
+**B. 이슈 없이 바로 작업하는 경우 (문서·설정)** — 브랜치를 직접 판다
+
+| 순서 | 무엇을 | 명령어 |
+| --- | --- | --- |
+| 1 | develop으로 이동 | `git switch develop` |
+| 2 | 최신 내려받기 | `git pull` |
+| 3 | 작업 브랜치 생성 | `git switch -c docs/erd-update` |
+| 4 | 변경 확인(키 섞였나) | `git status` |
+| 5 | 스테이징 | `git add .` |
+| 6 | 커밋(규칙대로) | `git commit -m "docs(erd): 관계도 추가"` |
+| 7 | 원격 push | `git push -u origin docs/erd-update` |
+| 8 | PR 생성 | GitHub에서 base=`develop`로 PR |
+
+**자주 쓰는 보조 명령**
+
+| 하고 싶은 것 | 명령어 |
+| --- | --- |
+| 내 브랜치 목록 | `git branch` |
+| 브랜치 이동 | `git switch <브랜치명>` |
+| 변경 내용 보기 | `git diff` |
+| 최근 커밋 5개 | `git log --oneline -5` |
+| 수정 취소(스테이징 전) | `git restore <파일>` |
+| 스테이징 취소 | `git restore --staged <파일>` |
+
+> 💡 커밋 거부 → 메시지 형식 확인(`<type>(<scope>): `, 콜론 붙여서).
+> push 거부 → pre-push 테스트 실패 또는 main·develop 직접 push 시도.
+
+### 7.5 AI(Claude Code)로 작업할 때
+- `/implement-feature F-00X` (스펙확인→구현→테스트), `/commit` (점검→테스트→커밋), `/run-tests`.
+- push는 항상 사용자 확인 후. PR은 base=develop. 상세: `@.claude/skills/git-workflow/SKILL.md`.
 
 ---
 
