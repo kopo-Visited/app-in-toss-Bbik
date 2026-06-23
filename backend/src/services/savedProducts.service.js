@@ -30,3 +30,25 @@ export async function save(userId, product) {
   const inserted = await savedProductRepo.insert(userId, productId);
   return { saved: true, savedProductId: inserted.id, message: '저장되었습니다.' };
 }
+
+/** F-005 저장 목록 조회 (최근순·페이징). 비어 있으면 빈 배열(F-005-E1 은 FE 안내). */
+export async function list(userId, { page, limit }) {
+  const items = await savedProductRepo.listByUser(userId, { page, limit });
+  return { page, limit, items };
+}
+
+/** F-005 개별 삭제 */
+export async function remove(userId, savedProductId) {
+  const deleted = await savedProductRepo.deleteOne(userId, savedProductId);
+  return {
+    deleted,
+    savedProductId,
+    message: deleted ? '삭제되었습니다.' : '이미 삭제되었거나 없는 항목입니다.',
+  };
+}
+
+/** F-005 전체 삭제 */
+export async function removeAll(userId) {
+  await savedProductRepo.deleteAllByUser(userId);
+  return { deleted: true, message: '전체 저장 상품이 삭제되었습니다.' };
+}
