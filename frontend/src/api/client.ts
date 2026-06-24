@@ -51,3 +51,7 @@ export function get<T>(path: string, opts?: Omit<RequestOptions, 'body'>): Promi
 export function post<T>(path: string, opts?: RequestOptions): Promise<T> {
   return request<T>('POST', path, opts);
 }
+
+export function del<T>(path: string, opts?: Omit<RequestOptions, 'body'>): Promise<T> {
+  return request<T>('DELETE', path, opts);
+}
