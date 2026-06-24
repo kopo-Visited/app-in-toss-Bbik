@@ -23,3 +23,14 @@ export const analyzeImageSchema = z.object({
     buffer: z.any(),
   }),
 });
+
+/**
+ * POST /api/products/decode-barcode (multipart, F-002/BL-002).
+ * image 파일만 받는다(바디 없음). multer 가 req.file 에 채운 뒤 검증(없으면 INVALID_REQUEST).
+ */
+export const decodeBarcodeSchema = z.object({
+  file: z.object({
+    mimetype: z.string().startsWith('image/'),
+    buffer: z.any(),
+  }),
+});

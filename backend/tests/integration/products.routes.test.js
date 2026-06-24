@@ -1,6 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import request from 'supertest';
 import nock from 'nock';
+import bwipjs from 'bwip-js';
+import { Jimp } from 'jimp';
 
 // DB / 캐시는 목 (supabase 실인스턴스 / 상태누수 방지). 외부 HTTP 는 nock.
 vi.mock('../../src/cache/memoryCache.js');
@@ -215,6 +217,70 @@ describe('POST /api/products/analyze-image (F-003, multipart)', () => {
       .field('scanHistoryId', SCAN_ID)
       .field('barcode', JAN)
       .attach('image', IMG, { filename: 'p.jpg', contentType: 'image/jpeg' });
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe('UNAUTHORIZED');
+  });
+});
+
+describe('POST /api/products/decode-barcode (F-002 / BL-002, multipart)', () => {
+  // 실제 EAN-13 바코드 PNG 와 바코드 없는 흰 이미지 — 전체 디코드 스택을 실제로 통과시킨다.
+  let BARCODE_PNG;
+  let BLANK_PNG;
+  const DECODED = '4901008315997'; // 디코드되어 나와야 할 정답
+
+  beforeAll(async () => {
+    BARCODE_PNG = await bwipjs.toBuffer({
+      bcid: 'ean13',
+      text: DECODED,
+      scale: 4,
+      height: 15,
+      includetext: true,
+      backgroundcolor: 'FFFFFF',
+      paddingwidth: 12,
+      paddingheight: 12,
+    });
+    BLANK_PNG = await new Jimp({ width: 200, height: 120, color: 0xffffffff }).getBuffer('image/png');
+  });
+
+  it('D-1: 바코드 이미지 → 200, data.barcode 디코드 성공', async () => {
+    const res = await request(app)
+      .post('/api/products/decode-barcode')
+      .set('Authorization', BEARER)
+      .attach('image', BARCODE_PNG, { filename: 'barcode.png', contentType: 'image/png' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.barcode).toBe(DECODED);
+  });
+
+  it('D-2: 바코드 없는 이미지 → 422 BARCODE_NOT_DETECTED + MANUAL_INPUT', async () => {
+    const res = await request(app)
+      .post('/api/products/decode-barcode')
+      .set('Authorization', BEARER)
+      .attach('image', BLANK_PNG, { filename: 'blank.png', contentType: 'image/png' });
+
+    expect(res.status).toBe(422);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe('BARCODE_NOT_DETECTED');
+    expect(res.body.error.nextAction).toBe('MANUAL_INPUT');
+  });
+
+  it('D-3: image 파일 누락 → 400 INVALID_REQUEST', async () => {
+    const res = await request(app)
+      .post('/api/products/decode-barcode')
+      .set('Authorization', BEARER);
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe('INVALID_REQUEST');
+  });
+
+  it('D-4: 인증 없음 → 401 UNAUTHORIZED', async () => {
+    const res = await request(app)
+      .post('/api/products/decode-barcode')
+      .attach('image', BARCODE_PNG, { filename: 'barcode.png', contentType: 'image/png' });
 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);

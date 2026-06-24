@@ -47,6 +47,13 @@ export class NotFoundError extends AppError {
   }
 }
 
+// 422 — 사진에서 바코드 미검출 (F-002/BL-002). nextAction=MANUAL_INPUT → FE 직접입력 폴백.
+export class BarcodeNotDetectedError extends AppError {
+  constructor(message, opts) {
+    super('BARCODE_NOT_DETECTED', message, opts);
+  }
+}
+
 // 429 — 외부 API/우리 서버 호출 한도 초과
 export class RateLimitError extends AppError {
   constructor(message, opts) {

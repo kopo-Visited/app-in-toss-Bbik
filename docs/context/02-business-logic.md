@@ -143,31 +143,33 @@ function identifyUser(tossUserKey):
 | 항목 | 내용 |
 | --- | --- |
 | 관련 기능 | F-002 바코드 스캔 |
-| 처리 계층 | Front(디코딩) + Backend(검증) |
-| 입력 | 카메라 영상 또는 직접 입력 문자열 |
+| 처리 계층 | Front(촬영) + Backend(디코딩·검증) |
+| 입력 | 촬영 이미지(앱인토스 `openCamera`) 또는 직접 입력 문자열 |
 | 출력 | JAN 코드(문자열) 또는 형식 오류 |
 | 선행조건 | 카메라 권한 허용 (직접 입력 시 불필요) |
 | 후행조건 | 검증된 JAN이 BL-003으로 전달됨 |
 | 적용 규칙 | BR-001 |
 
+> ⚠️ 설계 변경: 앱인토스 Granite 에는 실시간 바코드 스캐너 API가 없어, **촬영 이미지를 백엔드(`POST /api/products/decode-barcode`)가 디코드**하는 방식으로 보완한다. (원안: RN 네이티브 디코더 iOS Vision / Android ML Kit). 직접 입력 경로는 유지.
+
 **처리 절차**
 
 | 순서 | 처리 내용 |
 | --- | --- |
-| 1 | RN 네이티브 디코더(iOS Vision / Android ML Kit)로 바코드 인식 |
-| 2 | 미인식 시 가이드 표시 후 재시도, 반복 실패 시 직접 입력 유도 |
-| 3 | 인식값 포맷 검증 (EAN-13 / EAN-8, 숫자) — BR-001 |
-| 4 | 검증 통과 시 JAN 반환, 실패 시 오류 반환 |
+| 1 | 앱인토스 `openCamera`로 바코드 촬영 → 이미지를 `POST /api/products/decode-barcode`로 전송 |
+| 2 | 백엔드가 이미지 디코딩(zbar) → EAN-13 / EAN-8 심볼 검출 |
+| 3 | 검출값 포맷·체크디지트 검증 (EAN-13 / EAN-8, 숫자) — BR-001 |
+| 4 | 검증 통과 시 JAN 반환, 미검출 시 `BARCODE_NOT_DETECTED`(직접 입력 유도) |
 
 **의사코드**
 
 ```
-function decodeBarcode(input):
-    result = NativeBarcodeScanner.scan(input)        // iOS Vision / Android ML Kit
-    if result.isEmpty(): return null                 // 계속 스캔
-    if result.format not in ['EAN_13', 'EAN_8']:     // BR-001
-        return { error: 'INVALID_BARCODE' }          // F-002-E3
-    return normalize(result.value)                   // 숫자 JAN
+function decodeBarcode(imageBuffer):                  // POST /api/products/decode-barcode
+    symbols = ZbarDecoder.scan(toBitmap(imageBuffer)) // 로컬 라이브러리, 외부호출 없음
+    for s in symbols:
+        if s.format in ['EAN_13', 'EAN_8'] and isValidEan(s.value):  // BR-001 체크디지트
+            return { barcode: s.value }               // 숫자 JAN
+    return { error: 'BARCODE_NOT_DETECTED' }          // F-002-E2 → 직접 입력
 ```
 
 **예외 처리**
@@ -175,10 +177,10 @@ function decodeBarcode(input):
 | 코드 | 원인 | 처리 |
 | --- | --- | --- |
 | F-002-E1 | 카메라 권한 거부 | 권한 안내 후 설정 이동 유도 |
-| F-002-E2 | 인식 불가 | 일정 시간 미인식 시 직접 입력 유도 |
-| F-002-E3 | 지원 외 코드 | '인식할 수 없는 바코드입니다' 표시 |
+| F-002-E2 | 디코드 실패(미검출/체크디지트 불일치/손상 이미지) | `BARCODE_NOT_DETECTED`(422) → 직접 입력 유도 |
+| F-002-E3 | 직접 입력값 형식 오류 | `INVALID_BARCODE` → '인식할 수 없는 바코드입니다' 표시 |
 
-**관련 테이블 / API**: - / RN 네이티브 디코더
+**관련 테이블 / API**: - / `POST /api/products/decode-barcode` (zbar 디코딩)
 
 ---
 
