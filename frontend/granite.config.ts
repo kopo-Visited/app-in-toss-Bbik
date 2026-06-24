@@ -11,7 +11,7 @@ export default defineConfig({
       permissions: [],
       brand: {
         displayName: '삑',
-        icon: null, // 콘솔 업로드 후 URL로 교체 (출시 전)
+        icon: '', // 콘솔 업로드 후 URL로 교체 (출시 전)
         primaryColor: '#3182F6', // 브랜드 primary (docs/design/design-tokens.md §1 brand)
         bridgeColorMode: 'basic',
       },
