@@ -12,10 +12,10 @@
   },
   "dependencies": {
     "@apps-in-toss/framework": "1.5.2",
-    "@granite-js/native": "0.1.21",
-    "@granite-js/plugin-env": "0.1.21",
-    "@granite-js/plugin-router": "0.1.21",
-    "@granite-js/react-native": "0.1.21",
+    "@granite-js/native": "0.1.34",
+    "@granite-js/plugin-env": "0.1.34",
+    "@granite-js/plugin-router": "0.1.34",
+    "@granite-js/react-native": "0.1.34",
     "@toss/tds-react-native": "1.3.8",
     "react": "18.2.0",
     "react-native": "0.72.6"
