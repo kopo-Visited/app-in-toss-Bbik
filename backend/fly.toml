@@ -1,0 +1,20 @@
+# 삑 백엔드 Fly.io 앱 설정. 워크플로: flyctl deploy --remote-only -a bbik-api
+app = "bbik-api"
+primary_region = "nrt"  # 도쿄 — 라쿠텐(일본) API 근접
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
