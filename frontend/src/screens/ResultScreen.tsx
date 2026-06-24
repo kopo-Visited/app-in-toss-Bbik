@@ -66,6 +66,9 @@ export function ResultScreen({ product }: { product: Product }) {
         {/* AI 안내 배너 (AI 결과일 때만) */}
         {isAi ? (
           <View style={styles.aiBanner}>
+            {/* TODO(빌드 단계): 정보 아이콘은 현재 SVG → View+Text 원형 근사.
+                _web-reference 원본(인라인 SVG)과 대조해 react-native-svg 또는 TDS Icon(icn-info-line)으로 교체 검토.
+                원본 SVG fill=#3182F6(아이콘) / 배너 텍스트=#007AFF — 현 구현이 원본과 일치하는지 빌드 때 재확인. */}
             {/* SVG 정보 아이콘 → View+Text 원형 근사 (불가피한 변환) */}
             <View style={styles.aiIcon}>
               <Text style={styles.aiIconText}>{'i'}</Text>
