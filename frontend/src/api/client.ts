@@ -9,6 +9,20 @@ interface RequestOptions {
 }
 
 /**
+ * 백엔드 공통 응답 envelope (docs/context/03-api-spec.md §4).
+ * - 성공: { success: true, data }
+ * - 실패: { success: false, error: { code, message?, nextAction? }, data? }
+ */
+export interface ApiErrorBody {
+  code?: string;
+  message?: string;
+  nextAction?: string;
+}
+export type ApiEnvelope<T> =
+  | { success: true; data: T }
+  | { success?: false; error?: ApiErrorBody; data?: unknown };
+
+/**
  * 백엔드 공통 envelope를 다루는 단일 HTTP 진입점.
  * - 성공(json.success === true): json.data 를 T로 반환
  * - 실패: ApiError(code, 한국어메시지, nextAction) throw
@@ -31,10 +45,10 @@ export async function request<T>(method: Method, path: string, opts?: RequestOpt
     throw new ApiError('NETWORK_ERROR', '네트워크를 확인해주세요.');
   }
 
-  const json = await response.json();
+  const json = (await response.json()) as ApiEnvelope<T>;
 
   if (json?.success === true) {
-    return json.data as T;
+    return json.data;
   }
 
   throw new ApiError(

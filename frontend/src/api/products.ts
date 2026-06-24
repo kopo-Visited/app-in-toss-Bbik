@@ -1,4 +1,4 @@
-import { get } from './client';
+import { get, type ApiEnvelope } from './client';
 import { getAccessToken } from './session';
 import { baseURL } from './config';
 import { ApiError, messageForCode } from './errors';
@@ -71,14 +71,17 @@ export async function analyzeImage(params: {
       method: 'POST',
       // Content-Type 미지정(멀티파트 boundary 자동)
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: form,
+      // RN의 fetch는 FormData 업로드를 지원하지만, @types/node의 전역 FormData와
+      // RN BodyInit_가 참조하는 FormData가 서로 다른 타입으로 충돌한다(런타임 영향 없음).
+      // 동작은 그대로 두고 타입만 RN RequestInit['body']로 맞춘다.
+      body: form as unknown as RequestInit['body'],
     });
   } catch {
     throw new ApiError('NETWORK_ERROR', '네트워크를 확인해주세요.');
   }
-  const json = await res.json();
+  const json = (await res.json()) as ApiEnvelope<LookupSuccessData>;
   if (json?.success === true) {
-    return { product: toProduct(json.data as LookupSuccessData), scanHistoryId: json.data.scanHistoryId };
+    return { product: toProduct(json.data), scanHistoryId: json.data.scanHistoryId };
   }
   throw new ApiError(
     json?.error?.code ?? 'UNKNOWN',

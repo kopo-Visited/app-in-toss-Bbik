@@ -17,8 +17,9 @@ dist/
 build/
 coverage/
 
-# granite (frontend) build cache
+# granite (frontend) build cache / 빌드 산출물
 frontend/.granite/
+frontend/*.ait
 
 # os / editor
 .DS_Store

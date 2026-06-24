@@ -13,7 +13,8 @@ export default defineConfig({
         displayName: '삑',
         icon: '', // 콘솔 업로드 후 URL로 교체 (출시 전)
         primaryColor: '#3182F6', // 브랜드 primary (docs/design/design-tokens.md §1 brand)
-        bridgeColorMode: 'basic',
+        // bridgeColorMode: SDK 2.x brand 스키마에서 제거됨(framework 2.4.1 / @apps-in-toss/plugins).
+        // 새 스키마는 { displayName, primaryColor, icon }만 허용 — 대체 속성 없음.
       },
     }),
     env({
