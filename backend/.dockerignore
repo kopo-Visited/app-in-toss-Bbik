@@ -1,0 +1,19 @@
+# 이미지에 들어가면 안 되는 것 (시크릿·로컬 산출물)
+node_modules
+.env
+.env.*
+*.key
+*.pem
+*.crt
+
+# 로컬 임시 스크립트 (토큰 생성 등 — 절대 배포 금지)
+check-rakuten.js
+make-token.js
+
+# 메타/테스트
+.git
+.github
+*.test.js
+*.spec.js
+__tests__
+npm-debug.log
