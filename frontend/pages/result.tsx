@@ -1,7 +1,13 @@
 import { createRoute } from '@granite-js/react-native';
 import { ResultScreen } from '../src/screens/ResultScreen';
+import type { Product } from '../src/lib/product';
 
 export const Route = createRoute('/result', {
-  validateParams: (params) => params,
-  component: ResultScreen,
+  validateParams: (params) => params as { product: Product },
+  component: ResultPage,
 });
+
+function ResultPage() {
+  const { product } = Route.useParams();
+  return <ResultScreen product={product} />;
+}
