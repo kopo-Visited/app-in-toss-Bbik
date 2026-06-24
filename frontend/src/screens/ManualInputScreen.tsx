@@ -10,6 +10,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
+import { useProductLookup } from '../hooks/useProductLookup';
+import { LoadingOverlay } from '../components/LoadingOverlay';
+import { NoInternetOverlay } from '../components/NoInternetOverlay';
 
 /**
  * S-3a 바코드 직접 입력 (manual-input, F-003-E6) —
@@ -17,7 +20,7 @@ import { useNavigation } from '@granite-js/react-native';
  * 색·치수는 원본 값 1순위 그대로. 매핑:
  *   div→View/SafeAreaView, span→Text, input→TextInput, onClick→onPress(Pressable),
  *   objectFit:"fill"→resizeMode:"stretch".
- * 이 단계는 검증 + UI만. lookup(F-003) 연결은 Step 8 — submit은 TODO.
+ * submit → F-003 lookup 연결(found→/result, notFound→/capture).
  */
 
 // TODO: 로컬 에셋화 (만료 URL)
@@ -26,6 +29,7 @@ const HEADER_IMG =
 
 export function ManualInputScreen() {
   const navigation = useNavigation();
+  const { run, loading, networkError } = useProductLookup();
   const [code, setCode] = useState('');
   const canSubmit = code.length === 13 || code.length === 8; // JAN-13 / JAN-8
 
@@ -41,10 +45,7 @@ export function ManualInputScreen() {
     if (!canSubmit) {
       return;
     }
-    // TODO(Step 8): F-003 lookup 연결 — 입력 바코드로 조회 →
-    //   성공 시 navigation.navigate('/result', { product }),
-    //   PRODUCT_NOT_FOUND(nextAction CAPTURE_PRODUCT_IMAGE) 시
-    //   navigation.navigate('/capture', { barcode: code, scanHistoryId }).
+    run(code);
   };
 
   return (
@@ -90,6 +91,9 @@ export function ManualInputScreen() {
           <Text style={styles.ctaText}>{'조회하기'}</Text>
         </Pressable>
       </View>
+
+      {loading ? <LoadingOverlay /> : null}
+      {networkError ? <NoInternetOverlay onRetry={() => run(code)} /> : null}
     </SafeAreaView>
   );
 }

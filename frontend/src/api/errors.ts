@@ -30,12 +30,14 @@ export function messageForCode(code?: string, fallback?: string): string {
 export class ApiError extends Error {
   readonly code: string;
   readonly nextAction?: string;
+  readonly data?: unknown;
 
-  constructor(code: string, message: string, nextAction?: string) {
+  constructor(code: string, message: string, nextAction?: string, data?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.code = code;
     this.nextAction = nextAction;
+    this.data = data;
     // TS의 Error 상속 instanceof 보정
     Object.setPrototypeOf(this, ApiError.prototype);
   }

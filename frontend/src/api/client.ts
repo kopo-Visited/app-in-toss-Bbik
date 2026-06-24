@@ -41,6 +41,7 @@ export async function request<T>(method: Method, path: string, opts?: RequestOpt
     json?.error?.code ?? 'UNKNOWN',
     messageForCode(json?.error?.code, json?.error?.message),
     json?.error?.nextAction,
+    json?.data,
   );
 }
 
