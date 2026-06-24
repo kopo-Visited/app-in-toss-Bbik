@@ -5,7 +5,7 @@
 
 ## 1. 기술 스택 (고정)
 - React Native + 앱인토스 **Granite**: `@apps-in-toss/framework` + `@toss/tds-react-native`
-- 파일 기반 라우팅: `app/*.tsx`
+- 파일 기반 라우팅: `pages/*.tsx` (각 라우트는 `createRoute`로 정의). 빌드 설정은 `granite.config.ts`.
 - 프로젝트 생성/진입점/라우팅/SDK 사용법은 **`@docs/context/05-appsintoss-refs.md`**에 정리됨.
   그 문서에 없는 세부는 추측 말고 apps-in-toss MCP 또는 05 문서의 공식 URL(llms.txt 등) 참조.
 - ⚠️ 웹(div/span) 구현·앱빌더 export는 **참고용**(그대로 쓰지 말고 RN으로 변환).
@@ -15,15 +15,17 @@
 ## 2. 폴더 구조
 ```
 frontend/
-├── app/                      # 파일 기반 라우팅 (얇게 = src/screens import만)
-│   ├── index.tsx             #   메인
-│   ├── login.tsx             #   로그인 (F-001)
-│   ├── scan.tsx              #   바코드 스캔 (F-002)
-│   ├── capture.tsx           #   상품 촬영 폴백 (F-003)
-│   ├── manual-input.tsx      #   바코드 직접 입력 (F-003-E6) — 또는 모달
-│   ├── result/[barcode].tsx  #   결과 3변형 (F-003)
-│   └── saved/index.tsx       #   저장목록 (F-005)
+├── pages/                    # 파일 기반 라우팅 (얇게 = createRoute로 src/screens 연결만)
+│   ├── index.tsx             #   메인 ('/')
+│   ├── login.tsx             #   로그인 ('/login', F-001)
+│   ├── scan.tsx              #   바코드 스캔 ('/scan', F-002)
+│   ├── capture.tsx           #   상품 촬영 폴백 ('/capture', F-003)
+│   ├── manual-input.tsx      #   바코드 직접 입력 ('/manual-input', F-003-E6) — 또는 모달
+│   ├── result.tsx            #   결과 3변형 ('/result', barcode는 params로 전달, F-003)
+│   ├── saved.tsx             #   저장목록 ('/saved', F-005)
+│   └── _404.tsx              #   Not Found (createRoute 없이 기본 export)
 ├── src/
+│   ├── _app.tsx              # 앱 진입점 (AppsInToss.registerApp + require.context)
 │   ├── screens/              # 화면 조립(얇게)
 │   ├── features/             # 기능 단위 흐름·상태 오케스트레이션
 │   ├── components/           # TDS-RN 순수 프레젠테이션 컴포넌트
@@ -31,18 +33,19 @@ frontend/
 │   ├── api/                  # 백엔드 호출 + 에러코드→메시지
 │   └── lib/                  # 순수 유틸 (바코드 검증·가격 포맷 등)
 ├── __tests__/                # 단위 / 통합 테스트
-├── ait.config.ts             # 앱인토스 빌드 설정
+├── require.context.ts        # pages 라우트 수집 (require.context)
+├── granite.config.ts         # Granite/앱인토스 빌드 설정 (scheme·appName·plugins)
 └── package.json              # test 스크립트는 "echo no tests yet && exit 0" 유지(pre-push 통과용)
 ```
 
 ## 3. 계층 책임 (단방향, 절대 경계)
 ```
-app/*.tsx(라우트) → src/screens → src/features → src/hooks → src/api → src/lib
-                                   src/components(말단 프레젠테이션)
+pages/*.tsx(라우트, createRoute) → src/screens → src/features → src/hooks → src/api → src/lib
+                                                  src/components(말단 프레젠테이션)
 ```
 | 계층 | 위치 | 하는 일 | 절대 안 하는 일 |
 | --- | --- | --- | --- |
-| 라우트 | `app/*.tsx` | `src/screens` import만 (얇게) | UI 직접 작성 |
+| 라우트 | `pages/*.tsx` | `createRoute`로 `src/screens` 연결만 (얇게) | UI 직접 작성 |
 | Screen | `src/screens` | 화면 조립 | 직접 fetch·비즈니스 분기 |
 | Feature | `src/features` | 기능 흐름·상태 오케스트레이션 | 프레젠테이션 |
 | Hook | `src/hooks` | 상태·사이드이펙트 | UI 렌더 |
@@ -51,15 +54,17 @@ app/*.tsx(라우트) → src/screens → src/features → src/hooks → src/api 
 | lib | `src/lib` | 순수 유틸 | API·상태 |
 
 ## 4. 라우트 ↔ 화면
+- 라우트는 `pages/*.tsx`에서 `createRoute(path, { validateParams, component })`로 정의 (정적 path + params 객체).
+
 | 라우트/형태 | 화면 |
 | --- | --- |
-| `app/index.tsx` | 메인 |
-| `app/login.tsx` | 로그인 (appLogin → 인가코드 → 서버 토큰교환) |
-| `app/scan.tsx` | 바코드 스캔(다크) |
-| `app/capture.tsx` | 상품 촬영(다크, 조회 실패 폴백) |
-| `app/result/[barcode].tsx` | 결과(3변형) |
-| `app/saved/index.tsx` | 저장목록(리스트/빈) |
-| `app/manual-input.tsx` 또는 모달 | 바코드 직접 입력(F-003-E6) |
+| `pages/index.tsx` (`/`) | 메인 |
+| `pages/login.tsx` (`/login`) | 로그인 (appLogin → 인가코드 → 서버 토큰교환) |
+| `pages/scan.tsx` (`/scan`) | 바코드 스캔(다크) |
+| `pages/capture.tsx` (`/capture`) | 상품 촬영(다크, 조회 실패 폴백) |
+| `pages/result.tsx` (`/result`, barcode는 params 전달) | 결과(3변형) |
+| `pages/saved.tsx` (`/saved`) | 저장목록(리스트/빈) |
+| `pages/manual-input.tsx` (`/manual-input`) 또는 모달 | 바코드 직접 입력(F-003-E6) |
 | `<LoadingOverlay/>` / `<NoInternet/>` | 로딩 / 네트워크오류 (라우트 X, 오버레이) |
 
 ## 5. 절대 규칙
