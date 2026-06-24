@@ -22,14 +22,8 @@ export function LoginScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* 로고 이미지: 원본은 height:94만 지정. RN Image는 width 없으면 0이 될 수 있어
-            resizeMode:'contain' + 충분한 width(220)로 비율 유지하며 표시 (시각 결과 동일 목표). */}
-        {/* TODO: 로컬 에셋화 (만료 URL) */}
-        <Image
-          source={{ uri: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/bnt06rj8_expires_30_days.png' }}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        {/* 원본 첫 이미지(bnt06rj8)는 가짜 iOS 상태바+토스 내비바라 진짜 상태바와 중복/다크패턴 위험으로 제거.
+            브랜딩은 아래 앱 아이콘(ye4z00k4) + "삑 (Bbik)" 타이틀로 유지. 상단 여백은 scrollContent.paddingTop으로 보정. */}
         {/* TODO: 로컬 에셋화 (만료 URL) */}
         <Image
           source={{ uri: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/ye4z00k4_expires_30_days.png' }}
@@ -64,12 +58,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     alignItems: 'center',
+    // 제거한 가짜 상태바 이미지(height 94 + marginBottom 171) 대신 상단 여백을 SafeAreaView 기준으로 보정.
+    // 진짜 상태바와 겹치던 영역은 제외하고, 아이콘이 화면 위에서 충분히 떨어진 느낌만 유지하도록 100 적용.
+    paddingTop: 100,
     paddingBottom: 84,
-  },
-  logo: {
-    width: 220,
-    height: 94,
-    marginBottom: 171,
   },
   icon: {
     width: 106,

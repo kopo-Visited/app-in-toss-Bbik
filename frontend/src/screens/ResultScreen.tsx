@@ -7,6 +7,7 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
+import { useNavigation } from '@granite-js/react-native';
 import { useResultActions } from '../hooks/useResultActions';
 import { useToast } from '../hooks/useToast';
 import { Toast } from '../components/Toast';
@@ -22,12 +23,20 @@ import type { Product } from '../lib/product';
  * AI 안내 배너는 AI 결과일 때만 표시. SVG 정보 아이콘은 RN 불가 → View+Text 원형 근사.
  * 외부 이미지 URL은 원본 그대로(약 30일 후 만료 가능). TODO: 로컬 에셋화.
  */
-const HEADER_IMG = 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/3387a4d1_expires_30_days.png';
 const PLACEHOLDER_IMG = 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/g8y00kk9_expires_30_days.png';
 
 export function ResultScreen({ product }: { product: Product }) {
+  const navigation = useNavigation();
   const { save, share } = useResultActions();
   const toast = useToast();
+
+  const goBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('/');
+    }
+  };
 
   const isAi = product.lookupType === 'ai';
   const hasPrice = product.price != null && product.price !== 0;
@@ -40,10 +49,18 @@ export function ResultScreen({ product }: { product: Product }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* TODO: 로컬 에셋화 (만료 URL) */}
-        <Image source={{ uri: HEADER_IMG }} style={styles.header} resizeMode="stretch" />
+      {/* 좌상단 뒤로가기(네이티브). 가짜 상태바가 박힌 배너 이미지는 제거 — ScanScreen 정책과 동일. */}
+      <Pressable
+        onPress={goBack}
+        style={styles.backButton}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="뒤로 가기"
+      >
+        <Text style={styles.backIcon}>{'‹'}</Text>
+      </Pressable>
 
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 이미지 카드 */}
         <View style={styles.imageCard}>
           {/* TODO: 로컬 에셋화 (만료 URL) */}
@@ -98,13 +115,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  scrollContent: {
-    paddingBottom: 94,
+  backButton: {
+    position: 'absolute',
+    left: 6,
+    top: 50,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 20,
   },
-  header: {
-    width: '100%',
-    height: 94,
-    marginBottom: 47,
+  backIcon: {
+    color: '#212529',
+    fontSize: 30,
+    lineHeight: 30,
+  },
+  scrollContent: {
+    // 배너(94 + 47) 제거분을 네이티브 헤더(닫기 버튼) 높이만큼만 보존: 콘텐츠가 버튼 아래로 자연스럽게 시작.
+    paddingTop: 104,
+    paddingBottom: 94,
   },
   imageCard: {
     alignItems: 'center',
