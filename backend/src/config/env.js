@@ -37,6 +37,7 @@ export const config = {
     applicationId: get('RAKUTEN_APPLICATION_ID'),
     accessKey: get('RAKUTEN_ACCESS_KEY'),
     affiliateId: get('RAKUTEN_AFFILIATE_ID'),
+    referer: get('RAKUTEN_REFERER', 'https://bbik-api.fly.dev/'),
     timeoutMs: Number(get('RAKUTEN_TIMEOUT_MS', '5000')),
   },
 
