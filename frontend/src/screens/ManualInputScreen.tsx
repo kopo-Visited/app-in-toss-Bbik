@@ -5,7 +5,6 @@ import {
   View,
   Text,
   TextInput,
-  Image,
   Pressable,
   StyleSheet,
 } from 'react-native';
@@ -22,10 +21,6 @@ import { NoInternetOverlay } from '../components/NoInternetOverlay';
  *   objectFit:"fill"→resizeMode:"stretch".
  * submit → F-003 lookup 연결(found→/result, notFound→/capture).
  */
-
-// TODO: 로컬 에셋화 (만료 URL)
-const HEADER_IMG =
-  'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/3wby27ee_expires_30_days.png';
 
 export function ManualInputScreen() {
   const navigation = useNavigation();
@@ -50,13 +45,18 @@ export function ManualInputScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* 상단 바 이미지의 뒤로 화살표 위치에 투명 버튼 */}
-      <Pressable onPress={goBack} style={styles.backButton} />
+      {/* 좌상단 뒤로가기(네이티브). 가짜 상태바가 박힌 배너 이미지는 제거 — ScanScreen 정책과 동일. */}
+      <Pressable
+        onPress={goBack}
+        style={styles.backButton}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="뒤로 가기"
+      >
+        <Text style={styles.backIcon}>{'‹'}</Text>
+      </Pressable>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* TODO: 로컬 에셋화 (만료 URL) */}
-        <Image source={{ uri: HEADER_IMG }} style={styles.header} resizeMode="stretch" />
-
         {/* 큰 제목 */}
         <View style={styles.titleWrap}>
           <Text style={styles.title}>{'바코드 직접 입력'}</Text>
@@ -109,17 +109,21 @@ const styles = StyleSheet.create({
     top: 50,
     width: 44,
     height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 20,
+  },
+  backIcon: {
+    color: '#333D4B',
+    fontSize: 30,
+    lineHeight: 30,
   },
   scrollContent: {
     paddingBottom: 120,
   },
-  header: {
-    width: '100%',
-    height: 94,
-    marginBottom: 24,
-  },
   titleWrap: {
+    // 배너(94 + 24) 제거분을 네이티브 헤더(닫기 버튼) 높이만큼만 보존.
+    marginTop: 104,
     marginLeft: 24,
     marginRight: 24,
     marginBottom: 8,

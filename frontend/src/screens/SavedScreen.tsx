@@ -29,8 +29,6 @@ const TRASH_ICON =
   'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/e7ufhp8v_expires_30_days.png';
 const BOOKMARK_ICON =
   'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/noj3a7ap_expires_30_days.png';
-const HEADER_IMG =
-  'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/cvmz905x_expires_30_days.png';
 
 export function SavedScreen() {
   const navigation = useNavigation();
@@ -61,12 +59,18 @@ export function SavedScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* 상단 바 이미지 뒤로 화살표 위치에 투명 버튼 */}
-      <Pressable onPress={goBack} style={styles.backButton} />
+      {/* 좌상단 뒤로가기(네이티브). 가짜 상태바가 박힌 배너 이미지는 제거 — ScanScreen 정책과 동일. */}
+      <Pressable
+        onPress={goBack}
+        style={styles.backButton}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="뒤로 가기"
+      >
+        <Text style={styles.backIcon}>{'‹'}</Text>
+      </Pressable>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* TODO: 로컬 에셋화 (만료 URL) */}
-        <Image source={{ uri: HEADER_IMG }} style={styles.header} resizeMode="stretch" />
         {/* TODO: 사용자 이름 바인딩(프로필 연동 후) */}
         <Text style={styles.title}>{'OO님의 저장한 상품'}</Text>
 
@@ -138,20 +142,24 @@ const styles = StyleSheet.create({
     top: 50,
     width: 44,
     height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 20,
+  },
+  backIcon: {
+    color: '#031228',
+    fontSize: 30,
+    lineHeight: 30,
   },
   scrollContent: {
     paddingBottom: 388,
-  },
-  header: {
-    width: '100%',
-    height: 94,
-    marginBottom: 16,
   },
   title: {
     color: '#031228',
     fontSize: 22,
     fontWeight: 'bold',
+    // 배너(94 + 16) 제거분을 네이티브 헤더(닫기 버튼) 높이만큼만 보존: 콘텐츠가 버튼 아래로 자연스럽게 시작.
+    marginTop: 104,
     marginBottom: 24,
     marginLeft: 24,
   },
