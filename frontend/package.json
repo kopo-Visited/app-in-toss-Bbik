@@ -8,7 +8,7 @@
     "build": "granite build",
     "typecheck": "tsc --noEmit",
     "lint": "echo \"no linter configured yet\" && exit 0",
-    "test": "echo \"no tests yet\" && exit 0"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "@apps-in-toss/framework": "1.5.2",
@@ -30,8 +30,12 @@
     "@babel/preset-react": "^7.16.7",
     "@babel/preset-typescript": "^7.16.7",
     "@babel/runtime": "7.18.9",
+    "@testing-library/react-native": "^12.9.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.10.2",
     "@types/react": "18.3.3",
+    "jest": "^29.7.0",
+    "react-test-renderer": "18.2.0",
     "typescript": "^5.7.2"
   }
 }

@@ -6,7 +6,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ESNext"],
-    "types": ["react-native"],
+    "types": ["react-native", "jest"],
     "jsx": "react-native",
     "resolveJsonModule": true,
     "esModuleInterop": true,
