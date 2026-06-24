@@ -12,11 +12,11 @@ import { HomeTopNavBar } from '../components/HomeTopNavBar';
 /**
  * S-2 메인/홈 (home, F-002) — 사용자 제공 Figma export(/tmp/home-figma-export.tsx)대로 재구성.
  *
- * 구성(위→아래): 상단 내비바(뒤로/삑로고+이름/하트/더보기/구분선/닫기) → 바코드 일러스트
- *   → 안내문구 → 스캔/저장 버튼(하단). 색·치수는 export 값 1순위.
+ * 구성(위→아래): 상단 내비바(뒤로/삑로고+이름/하트/더보기/구분선/닫기) → 상단 인사
+ *   ("안녕하세요"/"무엇을 스캔해볼까요?", 디자인 스펙 S-2) → 바코드 일러스트 → 안내문구
+ *   → 스캔/저장 버튼(하단). 색·치수는 export/디자인토큰 1순위.
  *
  * 제외: 가짜 iOS 상태바(iOSStatusbariPhoneXornewer) — 진짜 상태바와 중복이라 SafeAreaView가 처리.
- * 제거: 이전 "안녕하세요"/"무엇을 스캔해볼까요?" 인사 — export에 없음.
  *
  * 상단 바는 화면 내부 컴포넌트(HomeTopNavBar)로 렌더. pages/index.tsx의 headerShown:false 유지
  *   (사유는 HomeTopNavBar.tsx 주석 참조 — 네이티브 헤더/accessoryButton API로는 export 재현 불가).
@@ -47,6 +47,12 @@ export function HomeScreen() {
       />
 
       <View style={styles.body}>
+        {/* 상단 인사 (디자인 스펙 S-2 "상단 인사"): "안녕하세요"(큰 글씨) + "무엇을 스캔해볼까요?" */}
+        <View style={styles.greeting}>
+          <Text style={styles.greetingHello}>{'안녕하세요'}</Text>
+          <Text style={styles.greetingQuestion}>{'무엇을 스캔해볼까요?'}</Text>
+        </View>
+
         {/* 바코드 스캔 일러스트 — 기존 f9laddj5 이미지(동일 그림) 그대로 사용.
             TODO: 로컬 에셋화 (외부 URL 약 30일 후 만료 가능). */}
         <Image
@@ -90,11 +96,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 32,
   },
+  greeting: {
+    alignSelf: 'stretch',
+    paddingHorizontal: 24,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  greetingHello: {
+    color: '#191F28',
+    fontSize: 28,
+    fontWeight: '700',
+  },
+  greetingQuestion: {
+    color: '#4E5968', // TDS grey700
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 16, // "안녕하세요"와 줄 간격(공백)
+  },
   hero: {
     width: 239,
     height: 217,
-    // 일러스트를 화면 중앙 즈음에 배치(상단 바 아래 여유).
-    marginTop: 80,
+    // 인사 아래, 일러스트를 조금 더 아래로.
+    marginTop: 72,
     marginBottom: 24,
   },
   guide: {
@@ -116,7 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#3182F6',
     borderRadius: 16,
     paddingVertical: 17,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   scanButtonText: {
     color: '#FFFFFF',
