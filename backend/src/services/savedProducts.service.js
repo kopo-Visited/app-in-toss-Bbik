@@ -15,9 +15,15 @@ export async function save(userId, product) {
     throw new AppError('INVALID_REQUEST', '바코드 정보가 없어 저장할 수 없습니다.');
   }
 
-  // ① 공용 상품 확보 (find-or-create by barcode). 이미 있으면 기존 product_id 사용.
-  let productId = (await communityProductRepo.findByBarcode(product.barcode))?.productId;
-  if (!productId) {
+  // ① 공용 상품 확보 (find-or-create by barcode).
+  //    기존 레코드가 있으면 재사용하되, 빈약하면 클라가 보낸 충실한 값으로 보강(enrich)한다.
+  //    (과거: 빈약한 기존 레코드를 그대로 재사용 → 상세값 유실 버그)
+  let productId;
+  const existingProduct = await communityProductRepo.findByBarcode(product.barcode);
+  if (existingProduct) {
+    productId = existingProduct.productId;
+    await communityProductRepo.enrich(existingProduct, product);
+  } else {
     productId = await communityProductRepo.insert({ ...product, userId });
   }
 

@@ -146,7 +146,10 @@ async function withTranslation(product) {
 // BL-006 일부: barcode 로 find-or-create 해서 productId 확보 (keyword/ai 저장용)
 async function persistCommunityProduct(product) {
   const existing = await communityProductRepo.findByBarcode(product.barcode);
-  if (existing) return existing.productId;
+  if (existing) {
+    await communityProductRepo.enrich(existing, product); // 빈약한 기존 레코드 보강(가산적)
+    return existing.productId;
+  }
   return communityProductRepo.insert(product);
 }
 
