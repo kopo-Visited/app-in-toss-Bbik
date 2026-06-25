@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
 import { useSavedProducts } from '../hooks/useSavedProducts';
+import { TrashIcon } from '../components/TrashIcon';
+import { BookmarkIcon } from '../components/BookmarkIcon';
 import { formatPrice, type SavedProduct } from '../lib/product';
 
 /**
@@ -22,10 +24,10 @@ import { formatPrice, type SavedProduct } from '../lib/product';
  * 다이얼로그(useDialog)는 RN에 없어 Alert로 재작성.
  */
 
-// 만료 외부 URL을 동일 이미지 로컬 에셋으로 교체. (eofnlaqp/e7ufhp8v/noj3a7ap)
-const ROW_ICON = require('../../saved-row-icon.png'); // 썸네일 fallback(상품 이미지 없을 때)
-const TRASH_ICON = require('../../saved-trash-icon.png');
-const BOOKMARK_ICON = require('../../saved-bookmark-icon.png');
+// 썸네일 fallback(상품 이미지 없을 때). 로컬 PNG가 기기에서 렌더 안 돼 원격 URL 유지.
+// TODO: 이 placeholder도 SVG/로컬화 — 현재는 거의 빈 흰 사각형이라 원격 유지.
+const ROW_ICON =
+  'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/eofnlaqp_expires_30_days.png';
 
 export function SavedScreen() {
   const navigation = useNavigation();
@@ -85,7 +87,7 @@ export function SavedScreen() {
               style={styles.row}
             >
               <Image
-                source={item.imageUrl ? { uri: item.imageUrl } : ROW_ICON}
+                source={{ uri: item.imageUrl || ROW_ICON }}
                 style={styles.thumb}
                 resizeMode="cover"
               />
@@ -97,7 +99,7 @@ export function SavedScreen() {
                   <Text style={styles.price}>{formatPrice(item.price)}</Text>
                 </View>
                 <Pressable onPress={() => handleDelete(item)} style={styles.trashButton}>
-                  <Image source={TRASH_ICON} style={styles.trashIcon} />
+                  <TrashIcon />
                 </Pressable>
               </View>
             </Pressable>
@@ -113,7 +115,7 @@ function EmptyState({ onScan }: { onScan: () => void }) {
   return (
     <>
       <View style={styles.emptyIconWrap}>
-        <Image source={BOOKMARK_ICON} style={styles.bookmark} resizeMode="stretch" />
+        <BookmarkIcon />
       </View>
       <View style={styles.emptyTextWrap}>
         <Text style={styles.emptyText}>{'저장한 상품이 없어요'}</Text>

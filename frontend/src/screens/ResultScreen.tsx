@@ -21,9 +21,11 @@ import type { Product } from '../lib/product';
  *   onClick→onPress(Pressable), objectFit:"fill"→resizeMode:"stretch", objectFit:"cover"→resizeMode:"cover".
  * 한 화면 3변형: lookupType(barcode/keyword/ai) + price(null/0/값). "라쿠텐 참고가"는 비AI+가격 있을 때만,
  * AI 안내 배너는 AI 결과일 때만 표시. SVG 정보 아이콘은 RN 불가 → View+Text 원형 근사.
- * 상품 이미지 없을 때 placeholder는 만료 외부 URL(g8y00kk9)을 동일 이미지 로컬 에셋으로 교체.
+ * 상품 이미지 없을 때 placeholder. 로컬 PNG가 기기에서 렌더 안 돼 원격 URL 유지.
+ * TODO: placeholder SVG/로컬화 (만료 URL).
  */
-const PLACEHOLDER_IMG = require('../../product-placeholder.png');
+const PLACEHOLDER_IMG =
+  'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/g8y00kk9_expires_30_days.png';
 
 export function ResultScreen({ product }: { product: Product }) {
   const navigation = useNavigation();
@@ -64,7 +66,7 @@ export function ResultScreen({ product }: { product: Product }) {
         {/* 이미지 카드 */}
         <View style={styles.imageCard}>
           <Image
-            source={hasImage ? { uri: product.imageUrl as string } : PLACEHOLDER_IMG}
+            source={{ uri: hasImage ? (product.imageUrl as string) : PLACEHOLDER_IMG }}
             style={styles.productImage}
             resizeMode={hasImage ? 'cover' : 'stretch'}
           />

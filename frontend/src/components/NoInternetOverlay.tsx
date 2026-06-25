@@ -1,16 +1,15 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { WifiSlashIcon } from './WifiSlashIcon';
 
 /**
  * 전체화면 인터넷 연결 오류 오버레이 (라우트 아님).
- * wifi-off 아이콘(근사) + 안내 문구 + 다시시도 버튼.
+ * wifi-slash 아이콘(SVG) + 안내 문구 + 다시시도 버튼.
  */
 export function NoInternetOverlay({ onRetry }: { onRetry: () => void }) {
   return (
     <View style={styles.overlay}>
-      {/* TODO(빌드): wifi-off 아이콘 — 원본 인라인 SVG(파란 wifi #3182F6 + 빨간 슬래시 #EC4452) → react-native-svg/TDS Icon으로 교체 검토. 현재 이모지+슬래시 근사. */}
       <View style={styles.iconBox}>
-        <Text style={styles.iconEmoji}>{'📶'}</Text>
-        <View style={styles.iconSlash} />
+        <WifiSlashIcon size={130} />
       </View>
 
       <Text style={styles.message}>{'인터넷 연결이 불안정해요\n잠시 후 다시 시도해주세요'}</Text>
