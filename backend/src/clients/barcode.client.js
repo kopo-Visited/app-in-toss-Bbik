@@ -13,12 +13,16 @@ import { isValidEan } from '../utils/ean.js';
  * @returns {Promise<string|null>} 유효한 EAN 숫자 | (검출 실패 시) null
  */
 export async function decodeEan(buffer) {
+  const startedAt = Date.now();
+  const bytes = buffer?.length ?? 0;
+
   let bitmap;
   try {
     const image = await Jimp.read(buffer);
     bitmap = image.bitmap; // { data: Buffer(RGBA), width, height }
-  } catch {
-    // 이미지 자체를 파싱할 수 없음(손상/미지원 포맷) → 검출 실패로 간주(직접입력 폴백)
+  } catch (e) {
+    // 이미지 파싱 불가(손상/미지원/빈 업로드) → 검출 실패로 간주(직접입력 폴백)
+    console.warn(`[decode-barcode] parse-fail bytes=${bytes} err=${e?.message} ${Date.now() - startedAt}ms`);
     return null;
   }
 
@@ -29,11 +33,23 @@ export async function decodeEan(buffer) {
   };
   const symbols = await scanImageData(imageData);
 
+  let picked = null;
   for (const symbol of symbols) {
     // EAN-13 / EAN-8(JAN) 만 채택 (BR-001). 그 외 심볼은 무시.
     if (symbol.typeName !== 'ZBAR_EAN13' && symbol.typeName !== 'ZBAR_EAN8') continue;
     const value = symbol.decode();
-    if (isValidEan(value)) return value;
+    if (isValidEan(value)) {
+      picked = value;
+      break;
+    }
   }
-  return null;
+
+  // 진단 1줄(Fly 로그): 기기가 보낸 이미지 크기/해상도/zbar 가 본 심볼/소요시간.
+  // bytes 작음/0 → 업로드 문제 / dims 큼 + 느림 → 고해상도라 처리 지연 / symbols=0 → 바코드 미검출(품질).
+  const seen = symbols.map((s) => s.typeName).join(',') || '-';
+  console.info(
+    `[decode-barcode] bytes=${bytes} dims=${bitmap.width}x${bitmap.height} ` +
+      `symbols=${symbols.length} types=[${seen}] picked=${picked ?? 'none'} ${Date.now() - startedAt}ms`,
+  );
+  return picked;
 }

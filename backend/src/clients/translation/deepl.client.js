@@ -1,4 +1,5 @@
 import { config, requireConfig } from '../../config/env.js';
+import { fetchWithTimeout } from '../../utils/fetchTimeout.js';
 import { RateLimitError, ExternalApiError } from '../../errors/AppError.js';
 
 /**
@@ -26,14 +27,18 @@ async function translateBatch(texts) {
   const apiKey = requireConfig('translation.deeplApiKey');
   let res;
   try {
-    res = await fetch(`${config.translation.deeplBaseUrl}/v2/translate`, {
-      method: 'POST',
-      headers: {
-        Authorization: `DeepL-Auth-Key ${apiKey}`,
-        'Content-Type': 'application/json',
+    res = await fetchWithTimeout(
+      `${config.translation.deeplBaseUrl}/v2/translate`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `DeepL-Auth-Key ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: inputs, source_lang: SOURCE_LANG, target_lang: TARGET_LANG }),
       },
-      body: JSON.stringify({ text: inputs, source_lang: SOURCE_LANG, target_lang: TARGET_LANG }),
-    });
+      8000, // 번역 8초 타임아웃 — 무한 대기 방지
+    );
   } catch (e) {
     throw new ExternalApiError('번역 API 호출에 실패했습니다.', { cause: e });
   }
