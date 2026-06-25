@@ -26,6 +26,13 @@ jest.mock('../../src/hooks/useSavedProducts', () => ({
   useSavedProducts: () => mockUseSavedProducts(),
 }));
 
+// 세션의 사용자 이름(로그인 응답 name) — 타이틀 바인딩 검증용으로 제어.
+let mockUserName: string | null = null;
+jest.mock('../../src/api/session', () => ({
+  __esModule: true,
+  getUserName: () => mockUserName,
+}));
+
 import { SavedScreen } from '../../src/screens/SavedScreen';
 
 const ITEM: SavedProduct = {
@@ -42,7 +49,30 @@ const ITEM: SavedProduct = {
 };
 
 describe('SavedScreen (S-6 저장 목록)', () => {
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => {
+    jest.restoreAllMocks();
+    mockUserName = null;
+  });
+
+  it('타이틀에 로그인 이름을 바인딩한다 (없으면 "회원"으로 폴백)', () => {
+    const base = {
+      items: [],
+      loading: false,
+      error: null,
+      remove: jest.fn(),
+      removeAll: jest.fn(),
+    };
+    // 이름 있을 때
+    mockUserName = '김토스';
+    mockUseSavedProducts.mockReturnValue(base);
+    const { rerender } = render(<SavedScreen />);
+    expect(screen.getByText('김토스님의 저장한 상품')).toBeTruthy();
+
+    // 이름 없을 때 → 회원 폴백
+    mockUserName = null;
+    rerender(<SavedScreen />);
+    expect(screen.getByText('회원님의 저장한 상품')).toBeTruthy();
+  });
 
   it('빈 목록이면 빈 상태 문구가 렌더된다', () => {
     mockUseSavedProducts.mockReturnValue({
