@@ -1,5 +1,6 @@
-import { View, Text, Pressable, Image, StyleSheet, type ImageSourcePropType } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Svg, Path } from 'react-native-svg';
+import { BbikLogo } from './BbikLogo';
 
 /**
  * S-2 홈 상단 내비게이션 바 (Figma export: TopNavigationAppInToss).
@@ -28,8 +29,6 @@ interface Props {
   onHeart?: () => void;
   /** 우측 더보기(…) (동작 미정 → no-op TODO) */
   onMore?: () => void;
-  /** 삑 로고 이미지 source (없으면 로고 자리 빈 박스) */
-  logoSource?: ImageSourcePropType;
 }
 
 function BackIcon() {
@@ -82,7 +81,6 @@ export function HomeTopNavBar({
   onClose,
   onHeart,
   onMore,
-  logoSource,
 }: Props) {
   return (
     <View style={styles.bar}>
@@ -98,11 +96,10 @@ export function HomeTopNavBar({
           <BackIcon />
         </Pressable>
         <View style={styles.titleArea}>
-          {logoSource ? (
-            <Image source={logoSource} style={styles.logo} resizeMode="contain" />
-          ) : (
-            <View style={[styles.logo, styles.logoPlaceholder]} />
-          )}
+          {/* 로컬 PNG가 기기에서 렌더 안 돼 SVG 로고로 교체. 둥근 모서리는 View로 클립. */}
+          <View style={styles.logo}>
+            <BbikLogo size={18} />
+          </View>
           <Text style={styles.name}>{'삑'}</Text>
         </View>
       </View>
@@ -166,9 +163,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 6,
-  },
-  logoPlaceholder: {
-    backgroundColor: '#3182F6',
+    overflow: 'hidden',
   },
   name: {
     marginLeft: 6,

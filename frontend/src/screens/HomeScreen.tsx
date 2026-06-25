@@ -2,12 +2,12 @@ import {
   SafeAreaView,
   View,
   Text,
-  Image,
   Pressable,
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
 import { HomeTopNavBar } from '../components/HomeTopNavBar';
+import { BarcodeScanHero } from '../components/BarcodeScanHero';
 import { useAuthGate } from '../hooks/useAuthGate';
 
 /**
@@ -47,13 +47,7 @@ export function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <HomeTopNavBar
-        logoSource={require('../../bbik-logo.png')}
-        onBack={goBack}
-        onClose={goBack}
-        onHeart={noop}
-        onMore={noop}
-      />
+      <HomeTopNavBar onBack={goBack} onClose={goBack} onHeart={noop} onMore={noop} />
 
       <View style={styles.body}>
         {/* 상단 인사 (디자인 스펙 S-2 "상단 인사"): "안녕하세요"(큰 글씨) + "무엇을 스캔해볼까요?" */}
@@ -62,15 +56,8 @@ export function HomeScreen() {
           <Text style={styles.greetingQuestion}>{'무엇을 스캔해볼까요?'}</Text>
         </View>
 
-        {/* 바코드 스캔 일러스트 — 기존 f9laddj5 이미지(동일 그림) 그대로 사용.
-            TODO: 로컬 에셋화 (외부 URL 약 30일 후 만료 가능). */}
-        <Image
-          source={{
-            uri: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/f9laddj5_expires_30_days.png',
-          }}
-          style={styles.hero}
-          resizeMode="stretch"
-        />
+        {/* 바코드 스캔 일러스트 — 로컬 PNG가 기기에서 렌더 안 돼 react-native-svg 로 교체. */}
+        <BarcodeScanHero style={styles.hero} />
         <Text style={styles.guide}>{'일본 상품 바코드를 찍어보세요'}</Text>
 
         {/* 신축 스페이서로 버튼을 화면 하단으로 밀어냄. */}

@@ -4,6 +4,7 @@ import { useBarcodeScan } from '../hooks/useBarcodeScan';
 import { useToast } from '../hooks/useToast';
 import { LoadingOverlay } from '../components/LoadingOverlay';
 import { NoInternetOverlay } from '../components/NoInternetOverlay';
+import { ScanBarcodeIcon } from '../components/ScanBarcodeIcon';
 import { Toast } from '../components/Toast';
 
 /**
@@ -14,9 +15,6 @@ import { Toast } from '../components/Toast';
  * 가이드 박스/하단 버튼 탭 → 권한 확인 → 촬영 → 백엔드 디코드 → lookup(F-003).
  * 디코드 성공 시 성공 토스트 후 결과로 이동, 미검출/실패는 직접입력(/manual-input) 폴백.
  */
-// 바코드 막대 근사 폭(원본 SVG 바코드 아이콘 대체). // TODO(빌드): 원본 바코드 SVG → react-native-svg/TDS Icon 교체 검토.
-const BARS = [3, 2, 4, 2, 3, 5, 2, 3];
-
 export function ScanScreen() {
   const navigation = useNavigation();
   const { scan, loading, networkError } = useBarcodeScan();
@@ -43,11 +41,7 @@ export function ScanScreen() {
       <View style={styles.center}>
         {/* 가이드 박스(원본 331x184). 탭 시 촬영→디코드 시작. */}
         <Pressable onPress={onScan} style={styles.guideBox}>
-          <View style={styles.barcodeRow}>
-            {BARS.map((w, i) => (
-              <View key={i} style={[styles.bar, { width: w }]} />
-            ))}
-          </View>
+          <ScanBarcodeIcon />
         </Pressable>
 
         <Text style={styles.guideText}>{'바코드를 사각형 안에 맞춰 촬영해주세요'}</Text>
@@ -97,15 +91,6 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  barcodeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bar: {
-    height: 60,
-    backgroundColor: '#B0B8C1',
-    marginHorizontal: 2,
   },
   guideText: {
     marginTop: 24,
