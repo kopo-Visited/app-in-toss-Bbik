@@ -40,6 +40,11 @@ export function useResultActions() {
         .join('\n');
     }
 
+    // 1-1) 공유 문구 푸터 통일: "[삑으로 스캔한 상품 정보]"를 다음 줄에.
+    //      백엔드 문구의 " — 삑으로 스캔한 상품 정보" 꼬리는 떼고 재부착(폴백 문구에도 동일 적용).
+    const SHARE_FOOTER = '[삑으로 스캔한 상품 정보]';
+    text = `${text.replace(/\s*—\s*삑으로 스캔한 상품 정보\s*$/u, '').trimEnd()}\n${SHARE_FOOTER}`;
+
     // 2) 클립보드 복사
     try {
       await setClipboardText(text);
