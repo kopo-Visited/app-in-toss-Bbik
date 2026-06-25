@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Image, StyleSheet, type ImageSourcePropType } from 'react-native';
 import { Svg, Path } from 'react-native-svg';
 
 /**
@@ -29,7 +29,7 @@ interface Props {
   /** 우측 더보기(…) (동작 미정 → no-op TODO) */
   onMore?: () => void;
   /** 삑 로고 이미지 source (없으면 로고 자리 빈 박스) */
-  logoSource?: { uri: string };
+  logoSource?: ImageSourcePropType;
 }
 
 function BackIcon() {
@@ -99,7 +99,7 @@ export function HomeTopNavBar({
         </Pressable>
         <View style={styles.titleArea}>
           {logoSource ? (
-            <Image source={logoSource} style={styles.logo} resizeMode="cover" />
+            <Image source={logoSource} style={styles.logo} resizeMode="contain" />
           ) : (
             <View style={[styles.logo, styles.logoPlaceholder]} />
           )}
