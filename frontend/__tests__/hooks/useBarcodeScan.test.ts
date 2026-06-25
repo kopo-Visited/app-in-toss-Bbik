@@ -3,10 +3,10 @@ import { renderHook, act, waitFor } from '@testing-library/react-native';
 /**
  * useBarcodeScan 단위 테스트 (회귀 방지).
  *
- * 핵심: openCamera 는 반드시 `base64: true` 로 호출돼야 한다.
- *   앱인토스 openCamera 타입상 dataUri 는 base64 옵션이 true 일 때만 Base64 문자열이고,
- *   false 면 base64 가 아닌 데이터/파일 URI 참조라 백엔드 디코드가 항상 실패한다.
- *   (실제로 이 한 줄이 false 여서 카메라 바코드 인식이 계속 실패했음.)
+ * 핵심: openCamera 는 `base64: false` 로 호출돼야 한다.
+ *   base64: true 면 dataUri 가 비어 `if(!image?.dataUri) return` 에서 빠져나가
+ *   decode-barcode 가 호출조차 안 된다(Fly 로그상 확인). false 면 dataUri 가 file:// 경로로
+ *   채워지고, products.ts 가 이를 multipart(파일)로 업로드한다(실기기 확인된 조합).
  *
  * 외부 의존(openCamera/products api/navigation)은 전부 mock → 실호출 0.
  */
@@ -46,7 +46,7 @@ describe('useBarcodeScan', () => {
     mockGetPermission.mockResolvedValue('granted');
   });
 
-  it('openCamera 를 base64: true 로 호출한다 (이게 false 면 디코드가 항상 실패)', async () => {
+  it('openCamera 를 base64: false 로 호출한다 (dataUri=file:// → multipart 업로드)', async () => {
     mockOpenCamera.mockResolvedValue({
       id: '1',
       dataUri: 'data:image/jpeg;base64,QUJD',
@@ -64,9 +64,9 @@ describe('useBarcodeScan', () => {
     });
 
     expect(mockOpenCamera).toHaveBeenCalledTimes(1);
-    // base64:true(디코드 필수) + maxWidth:720(업로드 페이로드 축소 — 디코드엔 충분)
+    // base64:false(dataUri=file:// → multipart 업로드) + maxWidth:720(페이로드 축소, #65)
     expect(mockOpenCamera.mock.calls[0][0]).toMatchObject({
-      base64: true,
+      base64: false,
       maxWidth: 720,
     });
   });

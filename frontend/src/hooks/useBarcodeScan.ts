@@ -71,11 +71,11 @@ export function useBarcodeScan() {
       setLoadingMessage(MSG_DECODING);
       setNetworkError(false);
       try {
-        // 2) 사진 촬영. 바코드 디코드는 고해상도가 불필요해 maxWidth 720으로 업로드 페이로드를 줄인다
-        //    (상품 사진 AI 분석은 CaptureScreen에서 1024 유지). base64 페이로드는 픽셀수에 비례.
-        //    ⚠️ base64: true 필수 — false면 dataUri 가 base64 문자열이 아니어서(파일/데이터 URI 참조)
-        //    백엔드가 Buffer.from(., 'base64') 로 깨진 버퍼를 만들어 디코드가 항상 실패한다.
-        const image = await openCamera({ base64: true, maxWidth: 720 });
+        // 2) 사진 촬영. base64: false → dataUri 가 file:// 경로로 채워지고, products.ts 가
+        //    이를 multipart(파일)로 업로드한다(실기기 확인된 방식).
+        //    ⚠️ base64: true 면 dataUri 가 비어 아래 가드에서 return 돼 decode 호출이 안 된다.
+        //    maxWidth 720 — 바코드 디코드엔 충분하고 업로드 페이로드 축소(#65). (AI 분석은 CaptureScreen 1024)
+        const image = await openCamera({ base64: false, maxWidth: 720 });
         if (!image?.dataUri) {
           // 사용자가 촬영 취소.
           return;
