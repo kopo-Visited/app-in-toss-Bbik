@@ -33,13 +33,13 @@ describe('login() — DEV_AUTH_BYPASS (임시 우회)', () => {
     expect(userRepo.findByTossKey).toHaveBeenCalledWith('dev-bypass-user');
     expect(userRepo.insert).toHaveBeenCalledWith({
       tossUserKey: 'dev-bypass-user',
-      name: '테스트사용자',
+      name: '정원치',
     });
     expect(result).toEqual({
       userId: 'dev-user-id',
       isNewUser: true,
       accessToken: 'dev-jwt',
-      name: '테스트사용자',
+      name: '정원치',
     });
   });
 
@@ -53,7 +53,7 @@ describe('login() — DEV_AUTH_BYPASS (임시 우회)', () => {
       userId: 'existing-dev-id',
       isNewUser: false,
       accessToken: 'dev-jwt',
-      name: '테스트사용자',
+      name: '정원치',
     });
   });
 });
