@@ -79,17 +79,18 @@ interface DecodeBarcodeData {
  * client.request는 JSON 전용이라 multipart는 여기서 직접 fetch (analyzeImage와 동일 패턴).
  */
 export async function decodeBarcode(params: { uri: string }): Promise<string> {
-  const form = new FormData();
-  // TODO(빌드): openCamera dataUri 형식(file uri 가정). RN FormData 파일 업로드 규약 — 실제 빌드에서 검증.
-  form.append('image', { uri: params.uri, name: 'barcode.jpg', type: 'image/jpeg' } as unknown as Blob);
   const token = getAccessToken();
   let res: Response;
   try {
+    // openCamera dataUri(= data:image/...;base64,...)를 JSON으로 그대로 전송. 백엔드가 파싱한다.
+    // RN FormData 파일 업로드는 file:// 경로여야 동작 → data URI는 멀티파트로 못 올려 백엔드가 빈 이미지를 받았음.
     res = await fetch(`${baseURL}/api/products/decode-barcode`, {
       method: 'POST',
-      // Content-Type 미지정(멀티파트 boundary 자동)
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: form as unknown as RequestInit['body'],
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ image: params.uri }),
     });
   } catch {
     throw new ApiError('NETWORK_ERROR', '네트워크를 확인해주세요.');
@@ -112,28 +113,27 @@ export async function decodeBarcode(params: { uri: string }): Promise<string> {
   );
 }
 
-/** F-003 POST /api/products/analyze-image (multipart). client.request는 JSON 전용이라 여기선 직접 fetch. */
+/** F-003 POST /api/products/analyze-image. openCamera dataUri(base64)를 JSON으로 전송. */
 export async function analyzeImage(params: {
   uri: string;
   barcode: string;
   scanHistoryId: string;
 }): Promise<{ product: Product; scanHistoryId: string }> {
-  const form = new FormData();
-  // TODO(빌드): openCamera dataUri 형식(file uri 가정). RN FormData 파일 업로드 규약 — 실제 빌드에서 검증.
-  form.append('image', { uri: params.uri, name: 'product.jpg', type: 'image/jpeg' } as unknown as Blob);
-  form.append('barcode', params.barcode);
-  form.append('scanHistoryId', params.scanHistoryId);
   const token = getAccessToken();
   let res: Response;
   try {
+    // openCamera dataUri(= data:image/...;base64,...)를 JSON으로 그대로 전송. 백엔드가 파싱한다.
     res = await fetch(`${baseURL}/api/products/analyze-image`, {
       method: 'POST',
-      // Content-Type 미지정(멀티파트 boundary 자동)
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      // RN의 fetch는 FormData 업로드를 지원하지만, @types/node의 전역 FormData와
-      // RN BodyInit_가 참조하는 FormData가 서로 다른 타입으로 충돌한다(런타임 영향 없음).
-      // 동작은 그대로 두고 타입만 RN RequestInit['body']로 맞춘다.
-      body: form as unknown as RequestInit['body'],
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        image: params.uri,
+        barcode: params.barcode,
+        scanHistoryId: params.scanHistoryId,
+      }),
     });
   } catch {
     throw new ApiError('NETWORK_ERROR', '네트워크를 확인해주세요.');
