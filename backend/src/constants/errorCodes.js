@@ -1,7 +1,7 @@
 /**
  * 공통 에러코드 → HTTP status · 기본 메시지 · nextAction 매핑.
  * 출처: 03-api-spec.md §4.3(Error Code), §4.4(nextAction).
- * nextAction: CAPTURE_PRODUCT_IMAGE | RETRY_SCAN | NONE
+ * nextAction: CAPTURE_PRODUCT_IMAGE | RETRY_SCAN | MANUAL_INPUT | NONE
  */
 export const ERROR_CODES = {
   INVALID_REQUEST: {
@@ -18,6 +18,12 @@ export const ERROR_CODES = {
     status: 400,
     message: '인식할 수 없는 바코드입니다.',
     nextAction: 'RETRY_SCAN',
+  },
+  // F-002 — 사진에서 바코드(JAN/EAN)를 검출하지 못함. FE 는 직접입력으로 폴백한다(BL-002).
+  BARCODE_NOT_DETECTED: {
+    status: 422,
+    message: '바코드를 인식하지 못했어요. 직접 입력해주세요.',
+    nextAction: 'MANUAL_INPUT',
   },
   PRODUCT_NOT_FOUND: {
     status: 404,
