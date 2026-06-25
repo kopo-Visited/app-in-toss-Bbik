@@ -8,7 +8,8 @@ export default defineConfig({
   appName: 'bbik',
   plugins: [
     appsInToss({
-      permissions: [],
+      // openCamera 사용(F-002 바코드 촬영 / F-003 상품 촬영)에 카메라 권한 필요.
+      permissions: [{ name: 'camera', access: 'access' }],
       brand: {
         displayName: '삑',
         icon: '', // 콘솔 업로드 후 URL로 교체 (출시 전)
@@ -18,7 +19,8 @@ export default defineConfig({
       },
     }),
     env({
-      SERVER_BASE_URL: 'http://localhost:3000', // backend/.env.example PORT=3000 기준 (출시 전 실제 URL로 교체)
+      // 배포 백엔드(Fly.io). 로컬 백엔드로 테스트하려면 'http://localhost:3000' 으로 교체.
+      SERVER_BASE_URL: 'https://bbik-api.fly.dev',
     }),
     router(),
   ],
