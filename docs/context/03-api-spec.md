@@ -414,16 +414,21 @@ GET https://openapi.rakuten.co.jp/ichibaproduct/api/Product/Search/20250801?form
 
 ### 10.2 Request
 
+두 가지 형식을 모두 받는다. 앱인토스 `openCamera`는 file:// 가 아닌 base64/데이터 URI를 주므로 RN 멀티파트 업로드가 불안정 → **JSON base64 권장**.
+
 ```
 POST /api/products/analyze-image
-Content-Type: multipart/form-data
+Content-Type: multipart/form-data        # (1) 멀티파트 파일
+# 또는
+Content-Type: application/json           # (2) JSON base64
+{ "image": "<base64 또는 dataURI>", "barcode": "...", "scanHistoryId": "..." }
 ```
 
 ### 10.3 Request Body
 
 | 필드 | 타입 | 필수 여부 | 설명 |
 | --- | --- | --- | --- |
-| `image` | File | 필수 | 상품명과 브랜드명이 보이는 상품 이미지 |
+| `image` | File 또는 String(base64) | 필수 | 상품명·브랜드명이 보이는 상품 이미지. 멀티파트 파일 또는 base64 문자열(순수 base64/`data:image/...;base64,` 둘 다 허용) |
 | `scanHistoryId` | String | 필수 | `/lookup` 실패 응답에서 전달받은 스캔 기록 ID |
 | `barcode` | String | 필수 | 최초 스캔한 JAN 코드 |
 
@@ -808,17 +813,26 @@ DELETE /api/saved-products
 | 인증 | 필요 (`Authorization: Bearer {accessToken}`) |
 | Content-Type | `multipart/form-data` |
 
-### 18.2 Request Body (multipart)
+### 18.2 Request Body (multipart 또는 JSON base64)
+
+멀티파트 파일 또는 JSON base64 둘 다 받는다. 앱인토스 `openCamera`가 file:// 가 아닌 base64를 주므로 **JSON base64 권장**.
+
+```
+Content-Type: multipart/form-data    # (1) field `image`: 이미지 파일
+# 또는
+Content-Type: application/json       # (2) { "image": "<base64 또는 dataURI>" }
+```
 
 | 필드 | 타입 | 필수 | 설명 |
 | --- | --- | --- | --- |
-| `image` | file (image/*) | O | 바코드가 보이게 촬영한 이미지 (최대 10MB) |
+| `image` | file 또는 String(base64) | O | 바코드 촬영 이미지. 멀티파트 파일(≤10MB) 또는 base64 문자열(순수/`data:image/...;base64,` 둘 다) |
 
 ### 18.3 처리 절차
 
 | 순서 | 처리 내용 |
 | --- | --- |
-| 1 | 이미지 수신(multer 메모리) → 이미지 디코딩 라이브러리로 그레이스케일/픽셀 변환 |
+| 0 | 이미지 입력 정규화: 멀티파트 파일 또는 JSON `image`(base64/dataURI) → 버퍼 |
+| 1 | 이미지 수신(multer 메모리/base64 디코드) → 이미지 디코딩 라이브러리로 그레이스케일/픽셀 변환 |
 | 2 | zbar(WASM)로 1D 바코드 심볼 검출, EAN-13 / EAN-8 만 채택 (BR-001) |
 | 3 | 검출값 EAN 체크디지트 검증으로 오인식 차단 (BR-001) |
 | 4 | 유효값 → 성공 응답, 미검출 → `BARCODE_NOT_DETECTED` (직접 입력 유도) |

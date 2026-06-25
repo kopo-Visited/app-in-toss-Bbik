@@ -222,9 +222,27 @@ describe('POST /api/products/analyze-image (F-003, multipart)', () => {
     expect(res.body.success).toBe(false);
     expect(res.body.error.code).toBe('UNAUTHORIZED');
   });
+
+  it('AI-7: JSON base64 이미지 경로 → keyword 성공, 200 (openCamera 대응)', async () => {
+    nockGemini(200, GEMINI_RAW_OK);
+    nockRakuten(true, 200, RAKUTEN_RAW_KEYWORD_SUCCESS);
+    nockDeepl(200, DEEPL_RAW_BATCH);
+    communityProductRepo.findByBarcode.mockResolvedValue(null);
+    communityProductRepo.insert.mockResolvedValue('product-3');
+
+    const res = await request(app)
+      .post('/api/products/analyze-image')
+      .set('Authorization', BEARER)
+      .send({ image: IMG.toString('base64'), barcode: JAN, scanHistoryId: SCAN_ID });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.lookupType).toBe('keyword');
+    expect(res.body.data.barcode).toBe(JAN);
+  });
 });
 
-describe('POST /api/products/decode-barcode (F-002 / BL-002, multipart)', () => {
+describe('POST /api/products/decode-barcode (F-002 / BL-002, multipart 또는 JSON base64)', () => {
   // 실제 EAN-13 바코드 PNG 와 바코드 없는 흰 이미지 — 전체 디코드 스택을 실제로 통과시킨다.
   let BARCODE_PNG;
   let BLANK_PNG;
@@ -285,5 +303,38 @@ describe('POST /api/products/decode-barcode (F-002 / BL-002, multipart)', () => 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);
     expect(res.body.error.code).toBe('UNAUTHORIZED');
+  });
+
+  it('D-5: JSON 순수 base64 → 200 디코드 성공 (openCamera 대응)', async () => {
+    const res = await request(app)
+      .post('/api/products/decode-barcode')
+      .set('Authorization', BEARER)
+      .send({ image: BARCODE_PNG.toString('base64') });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.barcode).toBe(DECODED);
+  });
+
+  it('D-6: JSON data URI(접두사 포함) → 200 디코드 성공', async () => {
+    const res = await request(app)
+      .post('/api/products/decode-barcode')
+      .set('Authorization', BEARER)
+      .send({ image: `data:image/png;base64,${BARCODE_PNG.toString('base64')}` });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.barcode).toBe(DECODED);
+  });
+
+  it('D-7: JSON body 비었음(image 없음) → 400 INVALID_REQUEST', async () => {
+    const res = await request(app)
+      .post('/api/products/decode-barcode')
+      .set('Authorization', BEARER)
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe('INVALID_REQUEST');
   });
 });

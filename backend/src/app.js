@@ -9,7 +9,8 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 export function createApp() {
   const app = express();
 
-  app.use(express.json({ limit: '2mb' }));
+  // base64 이미지(F-002/F-003 JSON 경로)를 담을 수 있게 한도 상향 (multer 파일 한도 10MB 와 정합).
+  app.use(express.json({ limit: '15mb' }));
   app.use(express.urlencoded({ extended: true }));
 
   // 헬스체크 (배포 환경 모니터링용)
