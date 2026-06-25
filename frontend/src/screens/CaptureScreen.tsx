@@ -34,8 +34,9 @@ export function CaptureScreen({
       return;
     }
     try {
-      // ⚠️ base64: true 필수 — false면 dataUri 가 base64 가 아니어서 백엔드 이미지 디코드가 실패한다.
-      const image = await openCamera({ base64: true, maxWidth: 1024 });
+      // base64: false → dataUri 가 file:// 경로 → products.ts 가 multipart(파일)로 업로드(실기기 확인).
+      // ⚠️ base64: true 면 dataUri 가 비어 아래 가드에서 return 돼 analyze-image 호출이 안 된다.
+      const image = await openCamera({ base64: false, maxWidth: 1024 });
       if (!image?.dataUri) {
         return;
       }

@@ -46,7 +46,7 @@ describe('useBarcodeScan', () => {
     mockGetPermission.mockResolvedValue('granted');
   });
 
-  it('openCamera 를 base64: true 로 호출한다 (이게 false 면 디코드가 항상 실패)', async () => {
+  it('openCamera 를 base64: false 로 호출한다 (dataUri=file:// → multipart 업로드)', async () => {
     mockOpenCamera.mockResolvedValue({
       id: '1',
       dataUri: 'data:image/jpeg;base64,QUJD',
@@ -64,7 +64,7 @@ describe('useBarcodeScan', () => {
     });
 
     expect(mockOpenCamera).toHaveBeenCalledTimes(1);
-    expect(mockOpenCamera.mock.calls[0][0]).toMatchObject({ base64: true });
+    expect(mockOpenCamera.mock.calls[0][0]).toMatchObject({ base64: false });
   });
 
   it('촬영한 dataUri 를 decodeBarcode 로 넘기고, found 면 /result 로 이동한다', async () => {

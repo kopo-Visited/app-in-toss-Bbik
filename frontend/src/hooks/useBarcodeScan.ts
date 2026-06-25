@@ -65,10 +65,10 @@ export function useBarcodeScan() {
       setLoading(true);
       setNetworkError(false);
       try {
-        // 2) 사진 촬영 (CaptureScreen과 동일 옵션).
-        //    ⚠️ base64: true 필수 — false면 dataUri 가 base64 문자열이 아니어서(파일/데이터 URI 참조)
-        //    백엔드가 Buffer.from(., 'base64') 로 깨진 버퍼를 만들어 디코드가 항상 실패한다.
-        const image = await openCamera({ base64: true, maxWidth: 1024 });
+        // 2) 사진 촬영. base64: false → dataUri 가 file:// 경로로 채워지고, products.ts 가
+        //    이를 multipart(파일)로 업로드한다(실기기 확인된 방식).
+        //    ⚠️ base64: true 로 두면 dataUri 가 비어 아래 가드에서 return 돼 decode 호출이 안 된다.
+        const image = await openCamera({ base64: false, maxWidth: 1024 });
         if (!image?.dataUri) {
           // 사용자가 촬영 취소.
           return;
