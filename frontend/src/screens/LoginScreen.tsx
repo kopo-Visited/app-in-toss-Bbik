@@ -24,7 +24,7 @@ export function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 앱 로고 (로컬 에셋). 정사각형이라 contain으로 안 짤리게 표시. */}
         <Image
-          source={require('../assets/bbik-logo.png')}
+          source={require('../../bbik-logo.png')}
           style={styles.icon}
           resizeMode="contain"
         />
