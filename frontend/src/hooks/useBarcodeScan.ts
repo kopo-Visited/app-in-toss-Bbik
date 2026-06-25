@@ -66,7 +66,9 @@ export function useBarcodeScan() {
       setNetworkError(false);
       try {
         // 2) 사진 촬영 (CaptureScreen과 동일 옵션).
-        const image = await openCamera({ base64: false, maxWidth: 1024 });
+        //    ⚠️ base64: true 필수 — false면 dataUri 가 base64 문자열이 아니어서(파일/데이터 URI 참조)
+        //    백엔드가 Buffer.from(., 'base64') 로 깨진 버퍼를 만들어 디코드가 항상 실패한다.
+        const image = await openCamera({ base64: true, maxWidth: 1024 });
         if (!image?.dataUri) {
           // 사용자가 촬영 취소.
           return;
