@@ -7,7 +7,7 @@ import { config } from '../config/env.js';
 // ⚠️ 임시(실기기 테스트용) — 토스 mTLS 인증서 미발급 동안 로그인 통과시키는 우회 유저.
 //    config.devAuthBypass(=DEV_AUTH_BYPASS) 가 true 일 때만 사용. 인증서 발급되면 제거.
 const DEV_BYPASS_TOSS_KEY = 'dev-bypass-user';
-const DEV_BYPASS_NAME = '테스트사용자';
+const DEV_BYPASS_NAME = '정원치';
 
 async function devBypassLogin() {
   // 토스 호출·PII 복호화를 건너뛰고 고정 테스트 유저로 자체 JWT 발급.
