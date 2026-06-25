@@ -17,7 +17,7 @@ import { Toast } from '../components/Toast';
  */
 export function ScanScreen() {
   const navigation = useNavigation();
-  const { scan, loading, networkError } = useBarcodeScan();
+  const { scan, loading, loadingMessage, networkError } = useBarcodeScan();
   const { message, show } = useToast();
 
   const close = () => {
@@ -52,7 +52,7 @@ export function ScanScreen() {
         <Text style={styles.manualText}>{'바코드 직접 입력기'}</Text>
       </Pressable>
 
-      {loading ? <LoadingOverlay message={'바코드를 인식하는 중...'} /> : null}
+      {loading ? <LoadingOverlay message={loadingMessage} /> : null}
       {networkError ? <NoInternetOverlay onRetry={onScan} /> : null}
       <Toast message={message} />
     </SafeAreaView>

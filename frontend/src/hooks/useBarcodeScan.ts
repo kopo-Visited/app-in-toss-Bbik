@@ -15,9 +15,14 @@ import { ApiError } from '../api/errors';
  *  - 카메라 권한 거부(OpenCameraPermissionError) → 권한 설정 안내 다이얼로그.
  *  - 네트워크 오류 → NoInternetOverlay 노출(networkError).
  */
+// 단계별 로딩 문구 — 전체 시간(라쿠텐+Gemini 번역)이 길어 멈춘 느낌이 안 들도록 단계마다 갱신.
+const MSG_DECODING = '바코드를 읽는 중...';
+const MSG_LOOKUP = '상품 정보를\n가져오는 중...';
+
 export function useBarcodeScan() {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState(MSG_DECODING);
   const [networkError, setNetworkError] = useState(false);
 
   // lookup 단계: found→/result, notFound→/capture. (useProductLookup과 동일한 분기)
@@ -63,20 +68,23 @@ export function useBarcodeScan() {
       }
 
       setLoading(true);
+      setLoadingMessage(MSG_DECODING);
       setNetworkError(false);
       try {
         // 2) 사진 촬영. base64: false → dataUri 가 file:// 경로로 채워지고, products.ts 가
         //    이를 multipart(파일)로 업로드한다(실기기 확인된 방식).
-        //    ⚠️ base64: true 로 두면 dataUri 가 비어 아래 가드에서 return 돼 decode 호출이 안 된다.
-        const image = await openCamera({ base64: false, maxWidth: 1024 });
+        //    ⚠️ base64: true 면 dataUri 가 비어 아래 가드에서 return 돼 decode 호출이 안 된다.
+        //    maxWidth 720 — 바코드 디코드엔 충분하고 업로드 페이로드 축소(#65). (AI 분석은 CaptureScreen 1024)
+        const image = await openCamera({ base64: false, maxWidth: 720 });
         if (!image?.dataUri) {
           // 사용자가 촬영 취소.
           return;
         }
         // 3) 백엔드 디코드.
         const barcode = await decodeBarcode({ uri: image.dataUri });
-        // 4) 성공 토스트 후 lookup.
+        // 4) 성공 토스트 후 lookup (라쿠텐+Gemini — 가장 오래 걸리는 단계라 문구 갱신).
         onScanned?.(barcode);
+        setLoadingMessage(MSG_LOOKUP);
         await lookup(barcode);
       } catch (e) {
         if (e instanceof OpenCameraPermissionError) {
@@ -104,5 +112,5 @@ export function useBarcodeScan() {
     [lookup, fallbackToManual],
   );
 
-  return { scan, loading, networkError };
+  return { scan, loading, loadingMessage, networkError };
 }
