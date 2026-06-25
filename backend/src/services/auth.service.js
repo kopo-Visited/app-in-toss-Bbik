@@ -18,7 +18,7 @@ async function devBypassLogin() {
   let user = await userRepo.findByTossKey(DEV_BYPASS_TOSS_KEY);
   const isNewUser = !user;
   if (!user) user = await userRepo.insert({ tossUserKey: DEV_BYPASS_TOSS_KEY, name: DEV_BYPASS_NAME });
-  return { userId: user.id, isNewUser, accessToken: issueToken(user.id) };
+  return { userId: user.id, isNewUser, accessToken: issueToken(user.id), name: DEV_BYPASS_NAME };
 }
 
 /**
@@ -27,7 +27,7 @@ async function devBypassLogin() {
  *    서버가 userKey 를 직접 확보한 뒤 식별/등록한다 (05-appsintoss-refs).
  *
  * @param {{authorizationCode:string, referrer:'DEFAULT'|'SANDBOX'}} input
- * @returns {Promise<{userId:string, isNewUser:boolean, accessToken:string}>}
+ * @returns {Promise<{userId:string, isNewUser:boolean, accessToken:string, name:string}>}
  */
 export async function login({ authorizationCode, referrer }) {
   // ⚠️ 실기기 테스트 임시 우회 (인증서 미발급 동안만). DEV_AUTH_BYPASS=true 일 때 토스 인증 생략.
@@ -54,5 +54,8 @@ export async function login({ authorizationCode, referrer }) {
     userId: user.id,
     isNewUser,
     accessToken: issueToken(user.id),
+    // F-005 저장목록 타이틀용. 본인에게 본인 복호화 이름만 반환(인증된 응답이라 PII 노출 안전).
+    // 미확보 시 위에서 '토스사용자' fallback 적용됨.
+    name,
   };
 }
