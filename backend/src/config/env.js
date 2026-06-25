@@ -25,8 +25,15 @@ export const config = {
   },
 
   // 토스 앱인토스 OAuth (mTLS 필수)
+  // 인증서는 PEM "내용"(TOSS_MTLS_CERT/KEY/CA) 또는 파일 "경로"(*_PATH) 둘 다 지원.
+  //   - 로컬 dev: *_PATH (backend/secrets/ 파일)
+  //   - Fly 프로덕션: 내용(휘발성 FS라 파일 못 올림 → fly secrets 로 PEM 주입)
+  // 내용이 경로보다 우선 (toss.client.resolveMtlsMaterial).
   toss: {
     baseUrl: get('TOSS_API_BASE_URL', 'https://apps-in-toss-api.toss.im'),
+    mtlsCert: get('TOSS_MTLS_CERT'),
+    mtlsKey: get('TOSS_MTLS_KEY'),
+    mtlsCa: get('TOSS_MTLS_CA'),
     mtlsCertPath: get('TOSS_MTLS_CERT_PATH'),
     mtlsKeyPath: get('TOSS_MTLS_KEY_PATH'),
     mtlsCaPath: get('TOSS_MTLS_CA_PATH'),
