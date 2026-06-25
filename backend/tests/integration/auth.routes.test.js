@@ -38,6 +38,7 @@ describe('POST /api/auth/toss/login (F-001 / BL-001)', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.userId).toBe(USER_ROW.id);
     expect(res.body.data.isNewUser).toBe(false);
+    expect(res.body.data.name).toBe('홍길동'); // F-005 저장목록 타이틀용 복호화 이름
     // 자체 JWT — 비어있지 않은 문자열 (issueToken 실호출, JWT_SECRET=test-secret)
     expect(typeof res.body.data.accessToken).toBe('string');
     expect(res.body.data.accessToken.length).toBeGreaterThan(0);

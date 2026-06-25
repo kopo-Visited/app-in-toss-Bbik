@@ -35,7 +35,12 @@ describe('login() — DEV_AUTH_BYPASS (임시 우회)', () => {
       tossUserKey: 'dev-bypass-user',
       name: '테스트사용자',
     });
-    expect(result).toEqual({ userId: 'dev-user-id', isNewUser: true, accessToken: 'dev-jwt' });
+    expect(result).toEqual({
+      userId: 'dev-user-id',
+      isNewUser: true,
+      accessToken: 'dev-jwt',
+      name: '테스트사용자',
+    });
   });
 
   it('우회 시 기존 테스트 유저면 insert 미호출, isNewUser:false', async () => {
@@ -44,6 +49,11 @@ describe('login() — DEV_AUTH_BYPASS (임시 우회)', () => {
     const result = await login(INPUT);
 
     expect(userRepo.insert).not.toHaveBeenCalled();
-    expect(result).toEqual({ userId: 'existing-dev-id', isNewUser: false, accessToken: 'dev-jwt' });
+    expect(result).toEqual({
+      userId: 'existing-dev-id',
+      isNewUser: false,
+      accessToken: 'dev-jwt',
+      name: '테스트사용자',
+    });
   });
 });

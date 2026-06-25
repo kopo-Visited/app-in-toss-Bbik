@@ -158,10 +158,13 @@ Base URL: `https://apps-in-toss-api.toss.im`
   "data": {
     "userId": "{user_id}",
     "isNewUser": false,
-    "accessToken": "{our_jwt_access_token}"
+    "accessToken": "{our_jwt_access_token}",
+    "name": "{decrypted_user_name}"
   }
 }
 ```
+
+- `name`: 복호화된 사용자 이름 (F-005 저장목록 타이틀 `OO님의 저장한 상품`용). **본인에게 본인 이름만** 반환하므로 PII 노출 안전(인증된 응답). 미확보 시 `토스사용자`. dev-bypass 경로는 `테스트사용자`.
 
 ### 5.6 예외 처리
 

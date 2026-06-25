@@ -54,6 +54,7 @@ describe('login() — BL-001 사용자 식별 판정 (F-001)', () => {
       userId: USER_ROW.id,
       isNewUser: false,
       accessToken: 'jwt-existing',
+      name: '홍길동',
     });
   });
 
@@ -77,6 +78,7 @@ describe('login() — BL-001 사용자 식별 판정 (F-001)', () => {
       userId: INSERTED_USER.id,
       isNewUser: true,
       accessToken: 'jwt-new',
+      name: '홍길동',
     });
   });
 
@@ -94,5 +96,6 @@ describe('login() — BL-001 사용자 식별 판정 (F-001)', () => {
       name: '토스사용자',
     });
     expect(result.isNewUser).toBe(true);
+    expect(result.name).toBe('토스사용자'); // 응답에도 fallback 이름이 실린다 (F-005 타이틀용)
   });
 });
