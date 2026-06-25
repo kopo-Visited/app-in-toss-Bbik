@@ -8,7 +8,8 @@ export default defineConfig({
   appName: 'bbik',
   plugins: [
     appsInToss({
-      permissions: [],
+      // openCamera 사용(F-002 바코드 촬영 / F-003 상품 촬영)에 카메라 권한 필요.
+      permissions: [{ name: 'camera', access: 'access' }],
       brand: {
         displayName: '삑',
         icon: '', // 콘솔 업로드 후 URL로 교체 (출시 전)
