@@ -85,15 +85,17 @@ function request(method, path, { headers = {}, body } = {}) {
  * ① AccessToken 발급. 응답 { resultType, success } 래퍼 → success 언래핑.
  * @returns {Promise<{accessToken, refreshToken, tokenType, expiresIn, scope}>}
  */
-export async function generateToken(authorizationCode, referrer) {
-  let res;
-  try {
-    res = await request('POST', GENERATE_TOKEN_PATH, { body: { authorizationCode, referrer } });
-  } catch (e) {
-    throw new ExternalApiError('토스 토큰 발급 호출 실패', { cause: e });
-  }
-  // 인가코드 만료·재사용 → invalid_grant (F-001-E4)
-  if (res.json?.error === 'invalid_grant') {
+/**
+ * generate-token 응답 해석 → success 언래핑 또는 에러 throw.
+ * ⚠️ 토스 실패는 HTTP 200 + { resultType:'FAIL', success:null, error:{errorCode, reason} } 로도 온다
+ *    (실제 응답 확인됨). error 는 문자열이 아니라 객체이므로 reason/errorCode 문자열을 본다.
+ * @returns {{accessToken, refreshToken, tokenType, expiresIn, scope}}
+ */
+export function interpretTokenResponse(res) {
+  const err = res.json?.error;
+  const errText = typeof err === 'string' ? err : `${err?.errorCode ?? ''} ${err?.reason ?? ''}`;
+  // 인가코드 만료·재사용·clientId 불일치 → invalid_grant (F-001-E4)
+  if (/invalid_grant/i.test(errText)) {
     throw new UnauthorizedError(
       '인가코드가 만료되었거나 이미 사용되었습니다. 다시 로그인해주세요.',
       { cause: res.json },
@@ -102,10 +104,20 @@ export async function generateToken(authorizationCode, referrer) {
   if (res.status === 401 || res.status === 403) {
     throw new UnauthorizedError('토스 인증에 실패했습니다.', { cause: res.json });
   }
-  if (res.status >= 400 || res.json?.success == null) {
+  if (res.status >= 400 || res.json?.resultType === 'FAIL' || res.json?.success == null) {
     throw new ExternalApiError('토스 토큰 발급에 실패했습니다.', { cause: res.json });
   }
   return res.json.success;
+}
+
+export async function generateToken(authorizationCode, referrer) {
+  let res;
+  try {
+    res = await request('POST', GENERATE_TOKEN_PATH, { body: { authorizationCode, referrer } });
+  } catch (e) {
+    throw new ExternalApiError('토스 토큰 발급 호출 실패', { cause: e });
+  }
+  return interpretTokenResponse(res);
 }
 
 /**
@@ -125,7 +137,7 @@ export async function getMe(accessToken) {
   if (res.status === 401 || res.status === 403) {
     throw new UnauthorizedError('토스 사용자 조회 인증에 실패했습니다.', { cause: res.json });
   }
-  if (res.status >= 400 || !res.json) {
+  if (res.status >= 400 || !res.json || res.json.resultType === 'FAIL') {
     throw new ExternalApiError('토스 사용자 조회에 실패했습니다.', { cause: res.json });
   }
   return res.json.success ?? res.json;
