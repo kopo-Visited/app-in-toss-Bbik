@@ -22,13 +22,10 @@ import { formatPrice, type SavedProduct } from '../lib/product';
  * 다이얼로그(useDialog)는 RN에 없어 Alert로 재작성.
  */
 
-// TODO: 로컬 에셋화 (만료 URL)
-const ROW_ICON =
-  'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/eofnlaqp_expires_30_days.png';
-const TRASH_ICON =
-  'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/e7ufhp8v_expires_30_days.png';
-const BOOKMARK_ICON =
-  'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/noj3a7ap_expires_30_days.png';
+// 만료 외부 URL을 동일 이미지 로컬 에셋으로 교체. (eofnlaqp/e7ufhp8v/noj3a7ap)
+const ROW_ICON = require('../../saved-row-icon.png'); // 썸네일 fallback(상품 이미지 없을 때)
+const TRASH_ICON = require('../../saved-trash-icon.png');
+const BOOKMARK_ICON = require('../../saved-bookmark-icon.png');
 
 export function SavedScreen() {
   const navigation = useNavigation();
@@ -88,7 +85,7 @@ export function SavedScreen() {
               style={styles.row}
             >
               <Image
-                source={{ uri: item.imageUrl || ROW_ICON }}
+                source={item.imageUrl ? { uri: item.imageUrl } : ROW_ICON}
                 style={styles.thumb}
                 resizeMode="cover"
               />
@@ -100,7 +97,7 @@ export function SavedScreen() {
                   <Text style={styles.price}>{formatPrice(item.price)}</Text>
                 </View>
                 <Pressable onPress={() => handleDelete(item)} style={styles.trashButton}>
-                  <Image source={{ uri: TRASH_ICON }} style={styles.trashIcon} />
+                  <Image source={TRASH_ICON} style={styles.trashIcon} />
                 </Pressable>
               </View>
             </Pressable>
@@ -116,8 +113,7 @@ function EmptyState({ onScan }: { onScan: () => void }) {
   return (
     <>
       <View style={styles.emptyIconWrap}>
-        {/* TODO: 로컬 에셋화 (만료 URL) */}
-        <Image source={{ uri: BOOKMARK_ICON }} style={styles.bookmark} resizeMode="stretch" />
+        <Image source={BOOKMARK_ICON} style={styles.bookmark} resizeMode="stretch" />
       </View>
       <View style={styles.emptyTextWrap}>
         <Text style={styles.emptyText}>{'저장한 상품이 없어요'}</Text>

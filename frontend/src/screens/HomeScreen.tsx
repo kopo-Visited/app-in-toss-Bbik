@@ -62,12 +62,9 @@ export function HomeScreen() {
           <Text style={styles.greetingQuestion}>{'무엇을 스캔해볼까요?'}</Text>
         </View>
 
-        {/* 바코드 스캔 일러스트 — 기존 f9laddj5 이미지(동일 그림) 그대로 사용.
-            TODO: 로컬 에셋화 (외부 URL 약 30일 후 만료 가능). */}
+        {/* 바코드 스캔 일러스트 — 만료 외부 URL(f9laddj5)을 동일 이미지 로컬 에셋으로 교체. */}
         <Image
-          source={{
-            uri: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/f9laddj5_expires_30_days.png',
-          }}
+          source={require('../../home-barcode-illust.png')}
           style={styles.hero}
           resizeMode="stretch"
         />
