@@ -5,6 +5,7 @@ import { useNavigation } from '@granite-js/react-native';
 import { login } from '../api/auth';
 import { setAccessToken } from '../api/session';
 import { ApiError } from '../api/errors';
+import { devAuthBypass } from '../api/config';
 
 /**
  * F-001 로그인 흐름 훅.
@@ -18,6 +19,15 @@ export function useLogin() {
   const handleLogin = async () => {
     setLoading(true);
     try {
+      // ⚠️ 임시 우회(실기기 테스트용): 토스 SDK appLogin 생략하고 백엔드 우회 로그인 직접 호출.
+      //    authorizationCode/referrer 는 백엔드 우회가 무시하지만 검증 통과용 더미값. 인증서 발급되면 제거.
+      if (devAuthBypass) {
+        const res = await login({ authorizationCode: 'dev-bypass', referrer: 'DEFAULT' });
+        setAccessToken(res.accessToken);
+        navigation.navigate('/');
+        return;
+      }
+
       const { authorizationCode, referrer } = await appLogin();
       const res = await login({ authorizationCode, referrer });
       setAccessToken(res.accessToken);
