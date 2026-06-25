@@ -13,11 +13,6 @@ export const config = {
   env: get('NODE_ENV', 'development'),
   port: Number(get('PORT', '3000')),
 
-  // ⚠️ 실기기 테스트용 임시 로그인 우회. 토스 mTLS 인증서 미발급 상태에서
-  //    로그인 화면을 통과해 다음 화면을 보기 위함. 'true' 일 때만 활성.
-  //    인증서 발급되면 이 환경변수를 제거(secret unset)할 것. 프로덕션 상시 노출 금지.
-  devAuthBypass: get('DEV_AUTH_BYPASS') === 'true',
-
   jwt: {
     secret: get('JWT_SECRET'),
     accessExpiresIn: get('JWT_ACCESS_EXPIRES_IN', '1h'),
@@ -25,8 +20,15 @@ export const config = {
   },
 
   // 토스 앱인토스 OAuth (mTLS 필수)
+  // 인증서는 PEM "내용"(TOSS_MTLS_CERT/KEY/CA) 또는 파일 "경로"(*_PATH) 둘 다 지원.
+  //   - 로컬 dev: *_PATH (backend/secrets/ 파일)
+  //   - Fly 프로덕션: 내용(휘발성 FS라 파일 못 올림 → fly secrets 로 PEM 주입)
+  // 내용이 경로보다 우선 (toss.client.resolveMtlsMaterial).
   toss: {
     baseUrl: get('TOSS_API_BASE_URL', 'https://apps-in-toss-api.toss.im'),
+    mtlsCert: get('TOSS_MTLS_CERT'),
+    mtlsKey: get('TOSS_MTLS_KEY'),
+    mtlsCa: get('TOSS_MTLS_CA'),
     mtlsCertPath: get('TOSS_MTLS_CERT_PATH'),
     mtlsKeyPath: get('TOSS_MTLS_KEY_PATH'),
     mtlsCaPath: get('TOSS_MTLS_CA_PATH'),

@@ -24,8 +24,6 @@ export default defineConfig({
     env({
       // 배포 백엔드(Fly.io). 로컬 백엔드로 테스트하려면 'http://localhost:3000' 으로 교체.
       SERVER_BASE_URL: 'https://bbik-api.fly.dev',
-      // ⚠️ 임시(실기기 테스트용) 로그인 우회 플래그. 토스 mTLS 인증서 발급되면 제거(false/삭제).
-      DEV_AUTH_BYPASS: 'true',
     }),
     router(),
   ],

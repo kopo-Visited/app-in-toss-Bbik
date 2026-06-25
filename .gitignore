@@ -4,6 +4,8 @@
 !.env.example
 *.key
 *.pem
+*.crt
+backend/secrets/
 
 # dependencies
 node_modules/

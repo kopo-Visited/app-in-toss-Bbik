@@ -12,23 +12,33 @@ import { ExternalApiError, UnauthorizedError } from '../errors/AppError.js';
 const GENERATE_TOKEN_PATH = '/api-partner/v1/apps-in-toss/user/oauth2/generate-token';
 const LOGIN_ME_PATH = '/api-partner/v1/apps-in-toss/user/oauth2/login-me';
 
+/**
+ * mTLS cert/key/ca 자료 해석. PEM "내용"(env) 우선, 없으면 파일 "경로"에서 읽음.
+ *   - 로컬 dev: *_PATH (backend/secrets/)
+ *   - Fly 프로덕션: 내용(fly secrets — 휘발성 FS라 파일 못 올림)
+ * cert/key 둘 다 없으면 명시적 에러(인증서 필요). ca 는 optional(토스 신뢰체인).
+ * @returns {{cert:(string|Buffer), key:(string|Buffer), ca:(string|Buffer|undefined)}}
+ */
+export function resolveMtlsMaterial(tossConfig = config.toss) {
+  const { mtlsCert, mtlsKey, mtlsCa, mtlsCertPath, mtlsKeyPath, mtlsCaPath } = tossConfig;
+  const cert = mtlsCert || (mtlsCertPath ? fs.readFileSync(mtlsCertPath) : null);
+  const key = mtlsKey || (mtlsKeyPath ? fs.readFileSync(mtlsKeyPath) : null);
+  const ca = mtlsCa || (mtlsCaPath ? fs.readFileSync(mtlsCaPath) : undefined);
+  // ⚠️ mTLS 인증서 필요: 콘솔 발급분(integration-process 문서). 미발급 시 실호출 불가.
+  if (!cert || !key) {
+    throw new Error(
+      '토스 mTLS 인증서 필요: TOSS_MTLS_CERT(_PATH) / TOSS_MTLS_KEY(_PATH) (콘솔 발급)',
+    );
+  }
+  return { cert, key, ca };
+}
+
 // mTLS Agent — 인증서가 있을 때만 생성. 없으면 명시적 에러(인증서 필요).
 let agent = null;
 function getMtlsAgent() {
   if (agent) return agent;
-  const { mtlsCertPath, mtlsKeyPath, mtlsCaPath } = config.toss;
-  // ⚠️ mTLS 인증서 필요: 콘솔 발급분(integration-process 문서). 미발급 시 실호출 불가.
-  if (!mtlsCertPath || !mtlsKeyPath) {
-    throw new Error(
-      '토스 mTLS 인증서 필요: TOSS_MTLS_CERT_PATH / TOSS_MTLS_KEY_PATH (콘솔 발급)',
-    );
-  }
-  agent = new https.Agent({
-    cert: fs.readFileSync(mtlsCertPath),
-    key: fs.readFileSync(mtlsKeyPath),
-    ca: mtlsCaPath ? fs.readFileSync(mtlsCaPath) : undefined,
-    keepAlive: true,
-  });
+  const { cert, key, ca } = resolveMtlsMaterial(config.toss);
+  agent = new https.Agent({ cert, key, ca, keepAlive: true });
   return agent;
 }
 
@@ -75,15 +85,17 @@ function request(method, path, { headers = {}, body } = {}) {
  * ① AccessToken 발급. 응답 { resultType, success } 래퍼 → success 언래핑.
  * @returns {Promise<{accessToken, refreshToken, tokenType, expiresIn, scope}>}
  */
-export async function generateToken(authorizationCode, referrer) {
-  let res;
-  try {
-    res = await request('POST', GENERATE_TOKEN_PATH, { body: { authorizationCode, referrer } });
-  } catch (e) {
-    throw new ExternalApiError('토스 토큰 발급 호출 실패', { cause: e });
-  }
-  // 인가코드 만료·재사용 → invalid_grant (F-001-E4)
-  if (res.json?.error === 'invalid_grant') {
+/**
+ * generate-token 응답 해석 → success 언래핑 또는 에러 throw.
+ * ⚠️ 토스 실패는 HTTP 200 + { resultType:'FAIL', success:null, error:{errorCode, reason} } 로도 온다
+ *    (실제 응답 확인됨). error 는 문자열이 아니라 객체이므로 reason/errorCode 문자열을 본다.
+ * @returns {{accessToken, refreshToken, tokenType, expiresIn, scope}}
+ */
+export function interpretTokenResponse(res) {
+  const err = res.json?.error;
+  const errText = typeof err === 'string' ? err : `${err?.errorCode ?? ''} ${err?.reason ?? ''}`;
+  // 인가코드 만료·재사용·clientId 불일치 → invalid_grant (F-001-E4)
+  if (/invalid_grant/i.test(errText)) {
     throw new UnauthorizedError(
       '인가코드가 만료되었거나 이미 사용되었습니다. 다시 로그인해주세요.',
       { cause: res.json },
@@ -92,10 +104,20 @@ export async function generateToken(authorizationCode, referrer) {
   if (res.status === 401 || res.status === 403) {
     throw new UnauthorizedError('토스 인증에 실패했습니다.', { cause: res.json });
   }
-  if (res.status >= 400 || res.json?.success == null) {
+  if (res.status >= 400 || res.json?.resultType === 'FAIL' || res.json?.success == null) {
     throw new ExternalApiError('토스 토큰 발급에 실패했습니다.', { cause: res.json });
   }
   return res.json.success;
+}
+
+export async function generateToken(authorizationCode, referrer) {
+  let res;
+  try {
+    res = await request('POST', GENERATE_TOKEN_PATH, { body: { authorizationCode, referrer } });
+  } catch (e) {
+    throw new ExternalApiError('토스 토큰 발급 호출 실패', { cause: e });
+  }
+  return interpretTokenResponse(res);
 }
 
 /**
@@ -115,7 +137,7 @@ export async function getMe(accessToken) {
   if (res.status === 401 || res.status === 403) {
     throw new UnauthorizedError('토스 사용자 조회 인증에 실패했습니다.', { cause: res.json });
   }
-  if (res.status >= 400 || !res.json) {
+  if (res.status >= 400 || !res.json || res.json.resultType === 'FAIL') {
     throw new ExternalApiError('토스 사용자 조회에 실패했습니다.', { cause: res.json });
   }
   return res.json.success ?? res.json;
