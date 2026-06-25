@@ -11,9 +11,12 @@ primary_region = "nrt"  # 도쿄 — 라쿠텐(일본) API 근접
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = "stop"
+  # 콜드스타트 제거: 머신을 항상 1대 켜둔다(min_machines_running=1). 안 그러면 잠깐 idle 후
+  # 머신이 꺼지고 다음 요청이 부팅(~4~6초)을 기다려 "오래 로딩"이 발생한다.
+  # auto_stop='suspend'는 (스케일된 여분 머신을) 메모리 스냅샷으로 멈춰 재개를 빠르게 한다.
+  auto_stop_machines = "suspend"
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
 
 [[vm]]
   size = "shared-cpu-1x"
