@@ -158,6 +158,37 @@ describe('analyzeImage() — BL-003 fallback / BL-004', () => {
     expect(result.product.nameKo).toBe('녹차 500ml');
   });
 
+  it('case4b: 과다어 0건 -> 앞 2어로 좁혀 1회 재시도 성공 (lookupType=keyword)', async () => {
+    geminiClient.extract.mockResolvedValue({
+      found: true,
+      name_jp: 'クリーミィタッチライナー 02 ブラック', // 색/번호 포함 과다어
+      brand_jp: 'キャンメイク',
+      search_keywords: ['キャンメイク クリーミィタッチライナー 02 ブラック'],
+      price: null,
+      currency: 'JPY',
+      confidence: 'high',
+    });
+    // 1차(브랜드+상품명 전체)=0건 → 2차(앞 2어)=성공
+    rakutenClient.searchByKeyword
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(RAKUTEN_KEYWORD_DTO);
+    translateBatchMock.mockResolvedValue(DEEPL_BATCH_RESULT);
+    communityProductRepo.insert.mockResolvedValue('pid-1b');
+
+    const result = await analyzeImage({ jan: JAN, scanHistoryId: SCAN_ID, photo, userId: 'u1' });
+
+    expect(rakutenClient.searchByKeyword).toHaveBeenCalledTimes(2);
+    expect(rakutenClient.searchByKeyword).toHaveBeenNthCalledWith(
+      1,
+      'キャンメイク クリーミィタッチライナー 02 ブラック',
+    );
+    expect(rakutenClient.searchByKeyword).toHaveBeenNthCalledWith(
+      2,
+      'キャンメイク クリーミィタッチライナー',
+    );
+    expect(result.lookupType).toBe('keyword');
+  });
+
   it('case5: keyword re-search empty -> ai fallback (found:false, price:null, translate x1, cache set x0)', async () => {
     geminiClient.extract.mockResolvedValue(GEMINI_EXTRACTED_OK);
     rakutenClient.searchByKeyword.mockResolvedValue(null);

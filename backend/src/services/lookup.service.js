@@ -74,21 +74,8 @@ export async function analyzeImage({ jan, scanHistoryId, photo, userId }) {
     });
   }
 
-  // 재조회 키워드 = 일본어 search_keywords (라쿠텐=일본 API). 없으면 브랜드+상품명.
-  const keyword = (
-    keywords.length ? keywords.join(' ') : [extracted.brand_jp, extracted.name_jp].filter(Boolean).join(' ')
-  ).trim();
-
-  // [재조회] 라쿠텐 keyword (BR-004)
-  let r2 = null;
-  if (keyword) {
-    try {
-      r2 = await rakutenClient.searchByKeyword(keyword);
-    } catch (e) {
-      if (e instanceof TimeoutError) r2 = null; // 타임아웃 → ai 폴백
-      else throw e;
-    }
-  }
+  // [재조회] 라쿠텐 keyword (BR-004) — 키워드 구성·재시도는 keywordSearch 에 위임(과다어 0건 방지).
+  const r2 = await keywordSearch(extracted, keywords);
 
   if (r2) {
     const product = await withTranslation({ ...r2, lookupType: 'keyword' });
@@ -128,6 +115,39 @@ export async function analyzeImage({ jan, scanHistoryId, photo, userId }) {
 }
 
 // ─── 내부 헬퍼 ───
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * 라쿠텐 keyword 재조회 (BR-004). 라쿠텐 keyword 는 공백=AND 라
+ * "브랜드+상품명+색/용량"처럼 어절이 많으면 0건이 잦다(검증: 4어→0건, 2어→17건).
+ *  ① 브랜드+상품명(없으면 search_keywords)로 검색
+ *  ② 0건이고 3어 이상이면 앞 2어로 좁혀 1회 재시도(뒤쪽 색/용량 수식어 제거)
+ * 재시도 사이엔 라쿠텐 rate limit(~1req/s) 회피용 간격을 둔다(테스트 제외).
+ * 타임아웃→null(ai 폴백), 429(E2)·기타는 전파(기존 동작 유지).
+ */
+async function keywordSearch(extracted, keywords) {
+  const brand = extracted.brand_jp?.trim() || '';
+  const name = extracted.name_jp?.trim() || '';
+  const primary = ([brand, name].filter(Boolean).join(' ') || keywords.join(' ')).trim();
+  if (!primary) return null;
+
+  const tokens = primary.split(/\s+/).filter(Boolean);
+  const broaden = tokens.length > 2 ? tokens.slice(0, 2).join(' ') : null;
+  const candidates = [...new Set([primary, broaden].filter(Boolean))];
+
+  for (let i = 0; i < candidates.length; i += 1) {
+    if (i > 0 && process.env.NODE_ENV !== 'test') await sleep(1100); // rate limit 회피
+    try {
+      const r = await rakutenClient.searchByKeyword(candidates[i]);
+      if (r) return r;
+    } catch (e) {
+      if (e instanceof TimeoutError) return null; // 타임아웃 → ai 폴백
+      throw e; // 429(E2)·기타 전파
+    }
+  }
+  return null;
+}
 
 // BL-004 번역: 라쿠텐 결과(nameOriginal 존재)면 일→한 번역. 설명·요약 없음(BR-007).
 async function withTranslation(product) {
