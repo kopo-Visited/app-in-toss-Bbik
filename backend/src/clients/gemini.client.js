@@ -1,4 +1,5 @@
 import { config, requireConfig } from '../config/env.js';
+import { fetchWithTimeout } from '../utils/fetchTimeout.js';
 import { RateLimitError, AnalysisError } from '../errors/AppError.js';
 
 /**
@@ -73,11 +74,11 @@ export async function extract(imageBuffer, mimeType = 'image/jpeg') {
 async function callWithRetry(url, body, attempt = 1) {
   let res;
   try {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    res = await fetchWithTimeout(
+      url,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+      15000, // Gemini 비전은 느릴 수 있어 15초 — 초과 시 무한 대기 방지(AbortError)
+    );
   } catch (e) {
     throw new AnalysisError('이미지를 인식할 수 없습니다. 다시 촬영해주세요.', {
       nextAction: 'CAPTURE_PRODUCT_IMAGE',
