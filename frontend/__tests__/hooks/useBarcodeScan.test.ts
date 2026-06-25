@@ -64,7 +64,11 @@ describe('useBarcodeScan', () => {
     });
 
     expect(mockOpenCamera).toHaveBeenCalledTimes(1);
-    expect(mockOpenCamera.mock.calls[0][0]).toMatchObject({ base64: true });
+    // base64:true(디코드 필수) + maxWidth:720(업로드 페이로드 축소 — 디코드엔 충분)
+    expect(mockOpenCamera.mock.calls[0][0]).toMatchObject({
+      base64: true,
+      maxWidth: 720,
+    });
   });
 
   it('촬영한 dataUri 를 decodeBarcode 로 넘기고, found 면 /result 로 이동한다', async () => {
