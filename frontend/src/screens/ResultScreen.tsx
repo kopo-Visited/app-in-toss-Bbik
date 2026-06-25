@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
+import { HomeTopNavBar } from '../components/HomeTopNavBar';
 import { useResultActions } from '../hooks/useResultActions';
 import { useToast } from '../hooks/useToast';
 import { Toast } from '../components/Toast';
@@ -39,6 +40,8 @@ export function ResultScreen({ product }: { product: Product }) {
       navigation.navigate('/');
     }
   };
+  const goHome = () => navigation.navigate('/');
+  const noop = () => {};
 
   const isAi = product.lookupType === 'ai';
   const hasPrice = product.price != null && product.price !== 0;
@@ -51,16 +54,7 @@ export function ResultScreen({ product }: { product: Product }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* 좌상단 뒤로가기(네이티브). 가짜 상태바가 박힌 배너 이미지는 제거 — ScanScreen 정책과 동일. */}
-      <Pressable
-        onPress={goBack}
-        style={styles.backButton}
-        hitSlop={8}
-        accessibilityRole="button"
-        accessibilityLabel="뒤로 가기"
-      >
-        <Text style={styles.backIcon}>{'‹'}</Text>
-      </Pressable>
+      <HomeTopNavBar onBack={goBack} onClose={goHome} onHeart={noop} onMore={noop} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 이미지 카드 */}
@@ -116,24 +110,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  backButton: {
-    position: 'absolute',
-    left: 6,
-    top: 50,
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 20,
-  },
-  backIcon: {
-    color: '#212529',
-    fontSize: 30,
-    lineHeight: 30,
-  },
   scrollContent: {
-    // 배너(94 + 47) 제거분을 네이티브 헤더(닫기 버튼) 높이만큼만 보존: 콘텐츠가 버튼 아래로 자연스럽게 시작.
-    paddingTop: 104,
+    // 상단 내비바(HomeTopNavBar, 높이 56)가 일반 흐름에서 자리를 차지하므로 여백은 최소만 둔다.
+    paddingTop: 16,
     paddingBottom: 94,
   },
   imageCard: {

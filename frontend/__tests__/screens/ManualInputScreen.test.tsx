@@ -9,11 +9,12 @@ import { render, fireEvent, screen } from '@testing-library/react-native';
  */
 
 const mockRun = jest.fn();
+const mockNavigate = jest.fn();
 
 jest.mock('@granite-js/react-native', () => ({
   __esModule: true,
   useNavigation: () => ({
-    navigate: jest.fn(),
+    navigate: mockNavigate,
     canGoBack: () => false,
     goBack: jest.fn(),
   }),
@@ -29,6 +30,7 @@ import { ManualInputScreen } from '../../src/screens/ManualInputScreen';
 describe('ManualInputScreen (S-3a 직접 입력)', () => {
   beforeEach(() => {
     mockRun.mockClear();
+    mockNavigate.mockClear();
   });
 
   it('제목·입력 필드·CTA가 렌더된다', () => {
@@ -36,6 +38,13 @@ describe('ManualInputScreen (S-3a 직접 입력)', () => {
     expect(screen.getByText('바코드 직접 입력')).toBeTruthy();
     expect(screen.getByPlaceholderText('바코드 숫자 입력')).toBeTruthy();
     expect(screen.getByText('조회하기')).toBeTruthy();
+  });
+
+  it('상단 내비바가 렌더되고 닫기(X) 탭 시 홈("/")으로 이동한다', () => {
+    render(<ManualInputScreen />);
+    expect(screen.getByLabelText('닫기')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText('닫기'));
+    expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 
   it('숫자 외 입력은 걸러지고 헬퍼에 자릿수가 반영된다', () => {
