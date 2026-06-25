@@ -4,7 +4,7 @@ export interface LoginResult {
   userId: string;
   isNewUser: boolean;
   accessToken: string;
-  /** 사용자 이름(토스 계정명). dev-bypass면 테스트 이름. 미확보 시 백엔드 fallback('토스사용자'). */
+  /** 사용자 이름(토스 계정명). 미확보(PII 미복호화) 시 백엔드 fallback('토스사용자'). */
   name: string;
 }
 
