@@ -81,3 +81,13 @@ export async function deleteSavedProduct(id: string): Promise<void> {
     { token: getAccessToken() ?? undefined },
   );
 }
+
+/**
+ * F-005 전체 삭제. DELETE /api/saved-products (Authorization: Bearer {accessToken}).
+ * 파괴적 작업 — 호출부(화면)에서 반드시 확인 다이얼로그를 거친 뒤 호출한다(BR/§5).
+ */
+export async function deleteAllSavedProducts(): Promise<void> {
+  await del<{ deleted: boolean; message: string }>('/api/saved-products', {
+    token: getAccessToken() ?? undefined,
+  });
+}

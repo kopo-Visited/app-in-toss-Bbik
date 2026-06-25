@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getSavedProducts, deleteSavedProduct } from '../api/savedProducts';
+import {
+  getSavedProducts,
+  deleteSavedProduct,
+  deleteAllSavedProducts,
+} from '../api/savedProducts';
 import { ApiError } from '../api/errors';
 import type { SavedProduct } from '../lib/product';
 
 /**
  * F-005 저장 목록 상태/사이드이펙트. 마운트 시 목록 로드.
- * - remove: 성공 시 로컬에서 제거. 실패 시 throw(화면에서 Alert 처리).
+ * - remove: 개별 삭제. 성공 시 로컬에서 제거. 실패 시 throw(화면에서 Alert 처리).
+ * - removeAll: 전체 삭제. 성공 시 로컬 비움. 실패 시 throw(화면에서 Alert 처리).
  */
 export function useSavedProducts() {
   const [items, setItems] = useState<SavedProduct[]>([]);
@@ -34,5 +39,11 @@ export function useSavedProducts() {
     setItems((prev) => prev.filter((it) => it.id !== id));
   }, []);
 
-  return { items, loading, error, reload: load, remove };
+  // 전체 삭제. 성공 시 로컬 비움. 실패 시 throw (화면에서 Alert).
+  const removeAll = useCallback(async () => {
+    await deleteAllSavedProducts();
+    setItems([]);
+  }, []);
+
+  return { items, loading, error, reload: load, remove, removeAll };
 }
