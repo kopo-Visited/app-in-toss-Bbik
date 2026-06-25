@@ -3,7 +3,7 @@ import { Alert } from 'react-native';
 import { appLogin } from '@apps-in-toss/framework';
 import { useNavigation } from '@granite-js/react-native';
 import { login } from '../api/auth';
-import { setAccessToken } from '../api/session';
+import { setAccessToken, setUserName } from '../api/session';
 import { ApiError } from '../api/errors';
 import { devAuthBypass } from '../api/config';
 
@@ -24,6 +24,7 @@ export function useLogin() {
       if (devAuthBypass) {
         const res = await login({ authorizationCode: 'dev-bypass', referrer: 'DEFAULT' });
         setAccessToken(res.accessToken);
+        setUserName(res.name);
         navigation.navigate('/');
         return;
       }
@@ -31,6 +32,7 @@ export function useLogin() {
       const { authorizationCode, referrer } = await appLogin();
       const res = await login({ authorizationCode, referrer });
       setAccessToken(res.accessToken);
+      setUserName(res.name);
       navigation.navigate('/');
     } catch (err) {
       // E3 인증 취소: appLogin이 취소 시 던지는 에러를 명확히 구분하기 어려우므로

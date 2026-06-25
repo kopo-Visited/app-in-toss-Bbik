@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
 import { useSavedProducts } from '../hooks/useSavedProducts';
+import { getUserName } from '../api/session';
 import { TrashIcon } from '../components/TrashIcon';
 import { BookmarkIcon } from '../components/BookmarkIcon';
 import { formatPrice, type SavedProduct } from '../lib/product';
@@ -89,8 +90,8 @@ export function SavedScreen() {
       </Pressable>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* TODO: 사용자 이름 바인딩(프로필 연동 후) */}
-        <Text style={styles.title}>{'OO님의 저장한 상품'}</Text>
+        {/* 로그인 응답의 name 바인딩(세션). 미확보 시 '회원'으로 폴백. */}
+        <Text style={styles.title}>{`${getUserName() ?? '회원'}님의 저장한 상품`}</Text>
 
         {loading ? (
           <ActivityIndicator style={styles.loading} />
