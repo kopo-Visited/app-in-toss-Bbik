@@ -48,6 +48,7 @@ export function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <HomeTopNavBar
+        logoSource={require('../assets/bbik-logo.png')}
         onBack={goBack}
         onClose={goBack}
         onHeart={noop}

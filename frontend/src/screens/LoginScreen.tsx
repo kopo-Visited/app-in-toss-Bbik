@@ -22,13 +22,11 @@ export function LoginScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* 원본 첫 이미지(bnt06rj8)는 가짜 iOS 상태바+토스 내비바라 진짜 상태바와 중복/다크패턴 위험으로 제거.
-            브랜딩은 아래 앱 아이콘(ye4z00k4) + "삑 (Bbik)" 타이틀로 유지. 상단 여백은 scrollContent.paddingTop으로 보정. */}
-        {/* TODO: 로컬 에셋화 (만료 URL) */}
+        {/* 앱 로고 (로컬 에셋). 정사각형이라 contain으로 안 짤리게 표시. */}
         <Image
-          source={{ uri: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/ye4z00k4_expires_30_days.png' }}
+          source={require('../assets/bbik-logo.png')}
           style={styles.icon}
-          resizeMode="stretch"
+          resizeMode="contain"
         />
         <Text style={styles.title}>{'삑 (Bbik)'}</Text>
         <Text style={styles.subtitle}>{'일본 상품 바코드를 스캔하면\n한국어로 알려드려요'}</Text>
