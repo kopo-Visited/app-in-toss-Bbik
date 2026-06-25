@@ -1,7 +1,6 @@
-import { get, type ApiEnvelope } from './client';
+import { get, post } from './client';
 import { getAccessToken } from './session';
-import { baseURL } from './config';
-import { ApiError, messageForCode } from './errors';
+import { ApiError } from './errors';
 import type { Product, LookupType } from '../lib/product';
 
 interface LookupSuccessData {
@@ -59,93 +58,63 @@ interface DecodeBarcodeData {
 }
 
 /**
- * F-002 POST /api/products/decode-barcode (multipart) — ⚠️ 임시 계약 (BE 확정 전).
+ * F-002 POST /api/products/decode-barcode (base64 JSON) — ⚠️ 임시 계약 (BE 확정 전, 필드명/형식 바뀔 수 있음).
  *
  * 배경: 앱인토스는 실시간 바코드 스캐너 API/네이티브 모듈을 제공하지 않고 `openCamera`(사진 촬영)만 있다.
  *       그래서 촬영한 바코드 사진을 백엔드로 보내 이미지에서 JAN/EAN 숫자를 디코드받고,
  *       그 숫자로 기존 lookup(F-003) 흐름을 탄다.
  *
- * 이 엔드포인트는 아직 BE에 없다. BE는 아래 계약에 맞춰 구현한다:
+ * ⚠️ 전송 방식 전환: 멀티파트 파일 업로드는 실기기에서 안 된다.
+ *    openCamera({ base64: true })는 파일(file://)이 아니라 순수 base64 문자열(dataUri)을 주므로
+ *    RN FormData 파일 업로드 규약(uri/name/type)에 맞는 파일이 없어 BE가 유효 이미지를 못 받았다.
+ *    → base64 JSON 전송으로 전환.
+ *
+ * 이 엔드포인트는 아직 BE에 없다(임시 계약, BE 확정 전). BE는 아래 계약에 맞춰 구현한다:
  *  - 요청: POST /api/products/decode-barcode
- *          Content-Type: multipart/form-data
- *          field `image`: 촬영 이미지 (analyzeImage와 동일 방식)
- *          Authorization: Bearer <accessToken> (analyzeImage와 동일 토큰)
+ *          Content-Type: application/json
+ *          body `{ "image": "<순수 base64 문자열>" }`  // data:image/...;base64, 접두사 없음
+ *          Authorization: Bearer <accessToken>
  *  - 성공: { success: true, data: { barcode: string } }   // 디코드된 EAN-13/EAN-8 숫자
  *  - 미검출: { success: false, error: { code: 'BARCODE_NOT_DETECTED', nextAction: 'MANUAL_INPUT' } }
  *  - 그 외 실패(이미지 손상 등)도 envelope error로 반환.
  *
- * FE는 미검출/실패/엔드포인트 없음(404)을 모두 ApiError로 받아 직접입력(/manual-input) 폴백으로 처리한다.
+ * ⚠️ BE 확정 시 바꿀 지점: 요청 필드명(`image`)·base64 형식(접두사 유무) 합의되면 여기 body 키만 수정.
  *
- * client.request는 JSON 전용이라 multipart는 여기서 직접 fetch (analyzeImage와 동일 패턴).
+ * FE는 미검출/실패를 모두 ApiError로 받아 직접입력(/manual-input) 폴백으로 처리한다.
+ * (post가 envelope error를 ApiError로 throw → 호출부에서 폴백; 미검출이면 nextAction=MANUAL_INPUT.)
  */
-export async function decodeBarcode(params: { uri: string }): Promise<string> {
-  const form = new FormData();
-  // TODO(빌드): openCamera dataUri 형식(file uri 가정). RN FormData 파일 업로드 규약 — 실제 빌드에서 검증.
-  form.append('image', { uri: params.uri, name: 'barcode.jpg', type: 'image/jpeg' } as unknown as Blob);
-  const token = getAccessToken();
-  let res: Response;
-  try {
-    res = await fetch(`${baseURL}/api/products/decode-barcode`, {
-      method: 'POST',
-      // Content-Type 미지정(멀티파트 boundary 자동)
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: form as unknown as RequestInit['body'],
-    });
-  } catch {
-    throw new ApiError('NETWORK_ERROR', '네트워크를 확인해주세요.');
-  }
-  // 엔드포인트 미구현(404) 등 JSON이 아닐 수 있어 방어적으로 파싱.
-  let json: ApiEnvelope<DecodeBarcodeData> | null = null;
-  try {
-    json = (await res.json()) as ApiEnvelope<DecodeBarcodeData>;
-  } catch {
-    throw new ApiError('BARCODE_NOT_DETECTED', '바코드를 인식하지 못했어요.', 'MANUAL_INPUT');
-  }
-  if (json?.success === true) {
-    return json.data.barcode;
-  }
-  throw new ApiError(
-    json?.error?.code ?? 'BARCODE_NOT_DETECTED',
-    messageForCode(json?.error?.code, json?.error?.message),
-    json?.error?.nextAction ?? 'MANUAL_INPUT',
-    json?.data,
-  );
+export async function decodeBarcode(params: { imageBase64: string }): Promise<string> {
+  const data = await post<DecodeBarcodeData>('/api/products/decode-barcode', {
+    body: { image: params.imageBase64 },
+    token: getAccessToken() ?? undefined,
+  });
+  return data.barcode;
 }
 
-/** F-003 POST /api/products/analyze-image (multipart). client.request는 JSON 전용이라 여기선 직접 fetch. */
+/**
+ * F-003 POST /api/products/analyze-image (base64 JSON) — ⚠️ 임시 계약 (BE 확정 전, 필드명/형식 바뀔 수 있음).
+ *
+ * decodeBarcode와 동일한 이유로 멀티파트 → base64 JSON 전환.
+ *  - 요청: POST /api/products/analyze-image
+ *          Content-Type: application/json
+ *          body `{ "image": "<순수 base64>", "barcode": "...", "scanHistoryId": "..." }`
+ *          Authorization: Bearer <accessToken>
+ *  - 성공/실패 envelope·에러코드는 기존 그대로.
+ *
+ * ⚠️ BE 확정 시 바꿀 지점: 요청 필드명(`image`)·base64 형식(접두사 유무) 합의되면 여기 body 키만 수정.
+ */
 export async function analyzeImage(params: {
-  uri: string;
+  imageBase64: string;
   barcode: string;
   scanHistoryId: string;
 }): Promise<{ product: Product; scanHistoryId: string }> {
-  const form = new FormData();
-  // TODO(빌드): openCamera dataUri 형식(file uri 가정). RN FormData 파일 업로드 규약 — 실제 빌드에서 검증.
-  form.append('image', { uri: params.uri, name: 'product.jpg', type: 'image/jpeg' } as unknown as Blob);
-  form.append('barcode', params.barcode);
-  form.append('scanHistoryId', params.scanHistoryId);
-  const token = getAccessToken();
-  let res: Response;
-  try {
-    res = await fetch(`${baseURL}/api/products/analyze-image`, {
-      method: 'POST',
-      // Content-Type 미지정(멀티파트 boundary 자동)
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      // RN의 fetch는 FormData 업로드를 지원하지만, @types/node의 전역 FormData와
-      // RN BodyInit_가 참조하는 FormData가 서로 다른 타입으로 충돌한다(런타임 영향 없음).
-      // 동작은 그대로 두고 타입만 RN RequestInit['body']로 맞춘다.
-      body: form as unknown as RequestInit['body'],
-    });
-  } catch {
-    throw new ApiError('NETWORK_ERROR', '네트워크를 확인해주세요.');
-  }
-  const json = (await res.json()) as ApiEnvelope<LookupSuccessData>;
-  if (json?.success === true) {
-    return { product: toProduct(json.data), scanHistoryId: json.data.scanHistoryId };
-  }
-  throw new ApiError(
-    json?.error?.code ?? 'UNKNOWN',
-    messageForCode(json?.error?.code, json?.error?.message),
-    json?.error?.nextAction,
-    json?.data,
-  );
+  const data = await post<LookupSuccessData>('/api/products/analyze-image', {
+    body: {
+      image: params.imageBase64,
+      barcode: params.barcode,
+      scanHistoryId: params.scanHistoryId,
+    },
+    token: getAccessToken() ?? undefined,
+  });
+  return { product: toProduct(data), scanHistoryId: data.scanHistoryId };
 }

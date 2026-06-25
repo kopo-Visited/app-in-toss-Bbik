@@ -66,13 +66,15 @@ export function useBarcodeScan() {
       setNetworkError(false);
       try {
         // 2) 사진 촬영 (CaptureScreen과 동일 옵션).
-        const image = await openCamera({ base64: false, maxWidth: 1024 });
+        //    base64:true → dataUri가 순수 base64 문자열로 반환됨(SDK: "base64가 true면 Base64 문자열").
+        //    실기기에서 멀티파트 파일 업로드가 안 돼 base64 JSON 전송으로 전환했다.
+        const image = await openCamera({ base64: true, maxWidth: 1024 });
         if (!image?.dataUri) {
           // 사용자가 촬영 취소.
           return;
         }
-        // 3) 백엔드 디코드.
-        const barcode = await decodeBarcode({ uri: image.dataUri });
+        // 3) 백엔드 디코드 (base64 JSON 전송).
+        const barcode = await decodeBarcode({ imageBase64: image.dataUri });
         // 4) 성공 토스트 후 lookup.
         onScanned?.(barcode);
         await lookup(barcode);

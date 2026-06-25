@@ -11,7 +11,7 @@ export function useImageAnalyze() {
   const [networkError, setNetworkError] = useState(false);
 
   const run = useCallback(
-    async (params: { uri: string; barcode: string; scanHistoryId: string }) => {
+    async (params: { imageBase64: string; barcode: string; scanHistoryId: string }) => {
       setLoading(true);
       setNetworkError(false);
       try {

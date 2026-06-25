@@ -34,11 +34,13 @@ export function CaptureScreen({
       return;
     }
     try {
-      const image = await openCamera({ base64: false, maxWidth: 1024 });
+      // base64:true → dataUri가 순수 base64 문자열(SDK: "base64가 true면 Base64 문자열").
+      // 실기기에서 멀티파트 파일 업로드가 안 돼 base64 JSON 전송으로 전환했다.
+      const image = await openCamera({ base64: true, maxWidth: 1024 });
       if (!image?.dataUri) {
         return;
       }
-      await run({ uri: image.dataUri, barcode, scanHistoryId });
+      await run({ imageBase64: image.dataUri, barcode, scanHistoryId });
     } catch {
       // 권한 거부/취소 등
       // TODO(빌드): 권한 거부 UX(openCamera.openPermissionDialog) 정교화
