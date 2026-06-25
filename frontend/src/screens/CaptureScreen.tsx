@@ -34,7 +34,8 @@ export function CaptureScreen({
       return;
     }
     try {
-      const image = await openCamera({ base64: false, maxWidth: 1024 });
+      // ⚠️ base64: true 필수 — false면 dataUri 가 base64 가 아니어서 백엔드 이미지 디코드가 실패한다.
+      const image = await openCamera({ base64: true, maxWidth: 1024 });
       if (!image?.dataUri) {
         return;
       }
