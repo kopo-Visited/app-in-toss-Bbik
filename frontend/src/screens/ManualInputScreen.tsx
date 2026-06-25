@@ -9,6 +9,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
+import { HomeTopNavBar } from '../components/HomeTopNavBar';
 import { useProductLookup } from '../hooks/useProductLookup';
 import { LoadingOverlay } from '../components/LoadingOverlay';
 import { NoInternetOverlay } from '../components/NoInternetOverlay';
@@ -35,6 +36,8 @@ export function ManualInputScreen() {
       navigation.navigate('/');
     }
   };
+  const goHome = () => navigation.navigate('/');
+  const noop = () => {};
 
   const handleSubmit = () => {
     if (!canSubmit) {
@@ -45,16 +48,7 @@ export function ManualInputScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* 좌상단 뒤로가기(네이티브). 가짜 상태바가 박힌 배너 이미지는 제거 — ScanScreen 정책과 동일. */}
-      <Pressable
-        onPress={goBack}
-        style={styles.backButton}
-        hitSlop={8}
-        accessibilityRole="button"
-        accessibilityLabel="뒤로 가기"
-      >
-        <Text style={styles.backIcon}>{'‹'}</Text>
-      </Pressable>
+      <HomeTopNavBar onBack={goBack} onClose={goHome} onHeart={noop} onMore={noop} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 큰 제목 */}
@@ -103,27 +97,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  backButton: {
-    position: 'absolute',
-    left: 6,
-    top: 50,
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 20,
-  },
-  backIcon: {
-    color: '#333D4B',
-    fontSize: 30,
-    lineHeight: 30,
-  },
   scrollContent: {
     paddingBottom: 120,
   },
   titleWrap: {
-    // 배너(94 + 24) 제거분을 네이티브 헤더(닫기 버튼) 높이만큼만 보존.
-    marginTop: 104,
+    // 상단 내비바(HomeTopNavBar, 높이 56)가 일반 흐름에서 자리를 차지하므로 여백은 최소만 둔다.
+    marginTop: 16,
     marginLeft: 24,
     marginRight: 24,
     marginBottom: 8,

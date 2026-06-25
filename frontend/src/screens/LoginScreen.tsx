@@ -7,17 +7,17 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Svg, Path } from 'react-native-svg';
+import { useNavigation } from '@granite-js/react-native';
+import { HomeTopNavBar } from '../components/HomeTopNavBar';
 import { useLogin } from '../hooks/useLogin';
 
 /**
  * S-1 로그인 (login, F-001) — 사용자 제공 Figma export 기준으로 재구성.
  * 핵심: 중앙 일러스트를 bbik-logo.png(이미지) → 바코드 스캔 SVG로 교체.
- * (bbik-logo는 홈 상단바 HomeTopNavBar 에서만 사용 — 그쪽은 건드리지 않음.)
  *
- * 구성(위→아래): 바코드 스캔 일러스트 → "삑 (Bbik)" 타이틀 → 부제
+ * 구성(위→아래): 상단 내비바(HomeTopNavBar) → 바코드 스캔 일러스트 → "삑 (Bbik)" 타이틀 → 부제
  *   → (여백) → CTA "토스로 시작하기"(login/loading 유지) → 푸터.
  * 색·치수는 export 값 1순위. iOS 가짜 상태바는 넣지 않음(SafeAreaView가 처리).
- * 상단 내비바(뒤로/하트/더보기/닫기)는 진입 화면이라 생략.
  */
 
 /** 바코드 스캔 일러스트 — 회색 프레임(#D1D6DB) 4모서리 + 파란 막대(#3182F6) 4개. */
@@ -63,10 +63,23 @@ function BarcodeScanIllustration() {
 }
 
 export function LoginScreen() {
+  const navigation = useNavigation();
   const { login, loading } = useLogin();
+
+  const goBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('/');
+    }
+  };
+  const goHome = () => navigation.navigate('/');
+  const noop = () => {};
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <HomeTopNavBar onBack={goBack} onClose={goHome} onHeart={noop} onMore={noop} />
+
       <View style={styles.content}>
         {/* 상단: 바코드 스캔 일러스트 + 타이틀 + 부제 */}
         <View style={styles.hero}>

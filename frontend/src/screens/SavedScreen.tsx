@@ -10,6 +10,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
+import { HomeTopNavBar } from '../components/HomeTopNavBar';
 import { useSavedProducts } from '../hooks/useSavedProducts';
 import { getUserName } from '../api/session';
 import { TrashIcon } from '../components/TrashIcon';
@@ -41,6 +42,8 @@ export function SavedScreen() {
       navigation.navigate('/');
     }
   };
+  const goHome = () => navigation.navigate('/');
+  const noop = () => {};
 
   const handleDelete = (item: SavedProduct) => {
     Alert.alert('삭제할까요?', `${item.nameKo}을(를) 저장 목록에서 지워요.`, [
@@ -78,16 +81,7 @@ export function SavedScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* 좌상단 뒤로가기(네이티브). 가짜 상태바가 박힌 배너 이미지는 제거 — ScanScreen 정책과 동일. */}
-      <Pressable
-        onPress={goBack}
-        style={styles.backButton}
-        hitSlop={8}
-        accessibilityRole="button"
-        accessibilityLabel="뒤로 가기"
-      >
-        <Text style={styles.backIcon}>{'‹'}</Text>
-      </Pressable>
+      <HomeTopNavBar onBack={goBack} onClose={goHome} onHeart={noop} onMore={noop} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 로그인 응답의 name 바인딩(세션). 미확보 시 '회원'으로 폴백. */}
@@ -166,21 +160,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  backButton: {
-    position: 'absolute',
-    left: 6,
-    top: 50,
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 20,
-  },
-  backIcon: {
-    color: '#031228',
-    fontSize: 30,
-    lineHeight: 30,
-  },
   deleteAllButton: {
     // 스캔하기와 동일: 하단 고정 풀폭 토스 파란 버튼.
     position: 'absolute',
@@ -205,8 +184,8 @@ const styles = StyleSheet.create({
     color: '#031228',
     fontSize: 22,
     fontWeight: 'bold',
-    // 배너(94 + 16) 제거분을 네이티브 헤더(닫기 버튼) 높이만큼만 보존: 콘텐츠가 버튼 아래로 자연스럽게 시작.
-    marginTop: 104,
+    // 상단 내비바(HomeTopNavBar, 높이 56)가 일반 흐름에서 자리를 차지하므로 여백은 최소만 둔다.
+    marginTop: 16,
     marginBottom: 24,
     marginLeft: 24,
   },
