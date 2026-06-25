@@ -2,6 +2,24 @@ import * as tossClient from '../clients/toss.client.js';
 import * as userRepo from '../repositories/user.repository.js';
 import { decryptPII } from '../crypto/pii.js';
 import { issueToken } from '../utils/jwt.js';
+import { config } from '../config/env.js';
+
+// ⚠️ 임시(실기기 테스트용) — 토스 mTLS 인증서 미발급 동안 로그인 통과시키는 우회 유저.
+//    config.devAuthBypass(=DEV_AUTH_BYPASS) 가 true 일 때만 사용. 인증서 발급되면 제거.
+const DEV_BYPASS_TOSS_KEY = 'dev-bypass-user';
+const DEV_BYPASS_NAME = '테스트사용자';
+
+async function devBypassLogin() {
+  // 토스 호출·PII 복호화를 건너뛰고 고정 테스트 유저로 자체 JWT 발급.
+  // eslint-disable-next-line no-console
+  console.warn(
+    '⚠️ [DEV_AUTH_BYPASS] 로그인 우회 활성 — 토스 인증 없이 테스트 유저로 통과. 운영 배포 금지.',
+  );
+  let user = await userRepo.findByTossKey(DEV_BYPASS_TOSS_KEY);
+  const isNewUser = !user;
+  if (!user) user = await userRepo.insert({ tossUserKey: DEV_BYPASS_TOSS_KEY, name: DEV_BYPASS_NAME });
+  return { userId: user.id, isNewUser, accessToken: issueToken(user.id) };
+}
 
 /**
  * BL-001 사용자 식별 판정 (F-001).
@@ -12,6 +30,9 @@ import { issueToken } from '../utils/jwt.js';
  * @returns {Promise<{userId:string, isNewUser:boolean, accessToken:string}>}
  */
 export async function login({ authorizationCode, referrer }) {
+  // ⚠️ 실기기 테스트 임시 우회 (인증서 미발급 동안만). DEV_AUTH_BYPASS=true 일 때 토스 인증 생략.
+  if (config.devAuthBypass) return devBypassLogin();
+
   // ① 토큰 발급 (mTLS) — 토스 accessToken/refreshToken 은 서버에서만 사용, 클라이언트 전달 금지.
   const token = await tossClient.generateToken(authorizationCode, referrer);
 
