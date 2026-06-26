@@ -1,4 +1,4 @@
-import { describe, it, expect, afterAll } from 'vitest';
+import { describe, it, expect, afterAll, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -47,6 +47,23 @@ describe('resolveMtlsMaterial (mTLS 자료 해석)', () => {
 
   it('ca 내용/경로도 해석한다', () => {
     expect(resolveMtlsMaterial({ mtlsCert: 'C', mtlsKey: 'K', mtlsCa: 'ENV-CA' }).ca).toBe('ENV-CA');
+    expect(resolveMtlsMaterial({ mtlsCert: 'C', mtlsKey: 'K', mtlsCaPath: certFile }).ca.toString()).toBe(
+      'FILE-CERT',
+    );
+  });
+
+  it('CA 경로가 잡혀있어도 파일이 없으면 throw 대신 ca:undefined (optional)', () => {
+    // 회귀 방지: TOSS_MTLS_CA_PATH 만 설정되고 파일이 없을 때 readFileSync 가 터져
+    //           mTLS 호출이 502 로 깨지던 문제. CA 는 optional 이라 무시해야 한다.
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const out = resolveMtlsMaterial({
+      mtlsCert: 'C',
+      mtlsKey: 'K',
+      mtlsCaPath: '/app/secrets/does-not-exist.crt',
+    });
+    expect(out.ca).toBeUndefined();
+    expect(out.cert).toBe('C');
+    vi.restoreAllMocks();
   });
 
   it('cert/key 둘 다 없으면 "인증서 필요" 에러 (미발급)', () => {
