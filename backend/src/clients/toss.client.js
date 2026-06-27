@@ -23,12 +23,22 @@ export function resolveMtlsMaterial(tossConfig = config.toss) {
   const { mtlsCert, mtlsKey, mtlsCa, mtlsCertPath, mtlsKeyPath, mtlsCaPath } = tossConfig;
   const cert = mtlsCert || (mtlsCertPath ? fs.readFileSync(mtlsCertPath) : null);
   const key = mtlsKey || (mtlsKeyPath ? fs.readFileSync(mtlsKeyPath) : null);
-  const ca = mtlsCa || (mtlsCaPath ? fs.readFileSync(mtlsCaPath) : undefined);
   // ⚠️ mTLS 인증서 필요: 콘솔 발급분(integration-process 문서). 미발급 시 실호출 불가.
   if (!cert || !key) {
     throw new Error(
       '토스 mTLS 인증서 필요: TOSS_MTLS_CERT(_PATH) / TOSS_MTLS_KEY(_PATH) (콘솔 발급)',
     );
+  }
+  // CA 는 optional(토스 신뢰체인). 경로가 잡혀 있어도 파일이 없으면 무시 — 로그인을 막지 않는다.
+  // (경로만 설정되고 CA 파일이 없을 때 readFileSync 가 throw → mTLS 호출 실패하던 문제 방지.)
+  let ca = mtlsCa || undefined;
+  if (!ca && mtlsCaPath) {
+    try {
+      ca = fs.readFileSync(mtlsCaPath);
+    } catch {
+      console.warn(`⚠️ [mTLS] CA 경로(${mtlsCaPath}) 읽기 실패 — CA 없이 진행(optional).`);
+      ca = undefined;
+    }
   }
   return { cert, key, ca };
 }
