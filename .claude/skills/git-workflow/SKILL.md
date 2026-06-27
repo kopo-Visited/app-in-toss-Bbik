@@ -15,6 +15,7 @@ feat/be/F-004-save ──PR──▶ develop ──릴리스 PR──▶ main
 - 기준 브랜치는 **develop**. 작업은 develop에서 분기한다.
 - PR 대상은 **항상 develop** (feature를 main으로 직접 PR 금지).
 - **main은 릴리스 시점에 develop → main PR로만** 머지한다.
+- 머지 후 브랜치 삭제: PR이 성공적으로 base 브랜치(develop 또는 main)에 머지(Merge) 완료되면, 저장소 관리와 깔끔한 브랜치 트리를 위해 해당 작업 브랜치(feature/fix 등)는 즉시 삭제한다
 - 절대 금지: main·develop 직접 커밋/푸시, feature를 main으로 바로 PR, force-push.
 
 ## 브랜치 네이밍 ★ (영역 + 기능/주제, 기능당 1브랜치)
@@ -26,6 +27,9 @@ feat/be/F-004-save ──PR──▶ develop ──릴리스 PR──▶ main
 | 프론트 기능 | `feat/fe/<F-ID>-<요약>` | `feat/fe/F-002-scan` |
 | 백엔드 버그 | `fix/be/<F-ID>-<요약>` | `fix/be/F-003-timeout` |
 | 프론트 버그 | `fix/fe/<F-ID>-<요약>` | `fix/fe/F-005-empty` |
+| 백엔드 테스트 | `test/be/<F-ID>-<요약>`| `test/be/BL-003` |
+| 프런트 엔드 테스트 | `test/fe/<F-ID>-<요약>` | `test/fe/scree-render-tests` |
+| 프런트 엔드 스타일 | `style/fe/<F-ID>-<요약>` |  `style/fe/F-002-layout` | 
 | 문서 | `docs/<주제>` | `docs/erd-update`, `docs/gemini-spec` |
 | 설정/잡일 | `chore/<주제>` | `chore/husky-config` |
 
@@ -34,7 +38,7 @@ feat/be/F-004-save ──PR──▶ develop ──릴리스 PR──▶ main
 
 ## 커밋 메시지 (Conventional Commits + 기능ID)
 - 형식: `<type>(<scope>): <요약>` / scope = F-ID 또는 BL-ID (문서/설정은 주제)
-- type: feat, fix, refactor, test, docs, chore
+- type: feat, fix, refactor, test, docs, chore, style
 - 예:
   - `feat(F-004): 저장 중복 판정(BR-009) 추가`
   - `fix(F-003): 라쿠텐 429 시 캐시 폴백 처리`
@@ -48,8 +52,8 @@ feat/be/F-004-save ──PR──▶ develop ──릴리스 PR──▶ main
 4. 테스트 통과 확인: 백엔드 `npm test && npm run test:integration` / 프론트 `npm test`.
 5. 커밋(위 형식). 1커밋=1관심사.
 6. push 전: 대상이 main/develop이면 **중단**(직접 push 금지). **feature 브랜치로만** push.
-7. **PR은 develop으로** 생성. 본문에 변경 요약 + 관련 F-ID/BR + 테스트 결과 + 시안 대조 체크리스트.
-8. 릴리스: 별도로 **develop → main PR**을 만들어 배포(릴리스 담당이 수행).
+7. **PR은 develop으로** 생성. 본문에 변경 요약 + 관련 F-ID/BR + 테스트 결과 + 시안 대조 체크리스트 작성. **(★ PR 머지 완료 후, 사용한 작업 브랜치는 즉시 삭제)**
+8. 릴리스: 별도로 **develop → main PR**을 만들어 배포(릴리스 담당이 수행). **(★ 주의: 릴리스 완료 후에도 기준 브랜치인 develop은 절대 삭제하지 않음)**
 
 ## 금지
 - 키·시크릿 커밋, force-push, 테스트 미통과 push.
