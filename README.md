@@ -57,71 +57,92 @@ flowchart TD
 
 ```
 bbik/
-├── README.md                  # 이 파일 — 프로젝트 전체 안내
-├── CLAUDE.md                  # AI 작업 기억(항상 로드): 아키텍처·도메인규칙·MCP·git·보안
-├── .mcp.json                  # MCP 서버 연결: apps-in-toss(ax) + supabase + figma
-├── .env.example               # 환경변수 예시(실제 키는 .env에, 커밋 금지)
-├── .gitignore                 # .env, *.key, *.pem 등 시크릿 제외
-├── commitlint.config.js       # 커밋 메시지 규칙(type + F-ID scope 필수)
-│
-├── .husky/                    # git 훅(검문소) — 누가 커밋하든 강제
-│   ├── commit-msg             #   커밋 메시지 형식 검사(commitlint)
-│   └── pre-push               #   push 전 FE/BE 테스트 실행
-│
 ├── .claude/                   # ── AI 하네스 ──
 │   ├── settings.json          #   권한·훅(키 차단, main/develop push 차단, push 전 테스트)
 │   ├── agents/                #   역할별 서브에이전트(frontend/backend/test/code-reviewer 등)
 │   ├── commands/              #   슬래시 커맨드(/implement-feature, /commit, /run-tests ...)
 │   └── skills/                #   프로젝트 스킬(스펙확인·라쿠텐·gemini·번역·supabase·git ...)
 │
+├── .github/                   # GitHub 관련 설정 및 템플릿 (PR, 이슈 등)
+│
+├── .husky/                    # git 훅(검문소) — 누가 커밋하든 강제
+│   ├── commit-msg             #   커밋 메시지 형식 검사(commitlint)
+│   └── pre-push               #   push 전 FE/BE 테스트 실행
+│
+├── backend/                   # ── Node.js 프록시(모든 로직·키) ──
+│   ├── src/
+│   │   ├── cache/             # 바코드 메모리 캐시(키=JAN)
+│   │   ├── clients/           # 외부 API 연결(라쿠텐/gemini/번역/supabase 등)
+│   │   ├── config/            # 환경변수 로딩 및 전역 설정
+│   │   ├── constants/         # 공통 상수 관리 (상태 코드, 고정값 등)
+│   │   ├── controllers/       # HTTP 입출력만(검증·응답 포맷)
+│   │   ├── crypto/            # 암호화, 해싱, 서명 등 보안 관련 로직
+│   │   ├── errors/            # 커스텀 에러 클래스 및 에러 핸들링 정의
+│   │   ├── middleware/        # auth/error/validate/ratelimit
+│   │   ├── repositories/      # Supabase 접근(users/community_products/saved/scan)
+│   │   ├── routes/            # 엔드포인트 ↔ controller 연결
+│   │   ├── schemas/           # db schema
+│   │   ├── utils/             # 공통 유틸리티 함수 모음
+│   │   ├── app.js             # Express 애플리케이션 세팅 및 미들웨어 등록
+│   │   └── server.js          # 서버 실행 (포트 바인딩 및 시작)
+│   ├── tests/                 # 단위(unit) 및 통합(integration) 테스트 로직
+│   ├── .dockerignore          # Docker 빌드 시 제외할 파일 목록
+│   ├── .env.example           # 환경변수(Env) 템플릿 파일
+│   ├── Dockerfile             # Docker 컨테이너 이미지 빌드 설정
+│   ├── fly.toml               # Fly.io 배포 환경 설정 파일
+│   ├── package-lock.json      # 패키지 의존성 버전 잠금 파일
+│   ├── package.json           # 프로젝트 메타데이터 및 스크립트, 패키지 목록
+│   └── vitest.config.js       # Vitest 테스트 러너 설정 파일
+│
 ├── docs/                      # ── 문서(스펙·설계·결정) ──
 │   ├── context/               #   AI가 참조하는 스펙 원본
 │   │   ├── 00-index.md        #     문서 목차 + 공통 전제(v1.1)
-│   │   ├── 01-functional-spec.md   #  기능 요구사항(F-001~006·예외)
-│   │   ├── 02-business-logic.md     # 비즈니스 로직(BL/BR·의사코드)
-│   │   ├── 03-api-spec.md           # API 명세(엔드포인트·응답·에러코드)
-│   │   ├── 04-erd.md                # DB 테이블 정의(4테이블·관계도)
-│   │   ├── 05-appsintoss-refs.md    # 앱인토스 SDK·테스트·출시·문서 URL
+│   │   ├── 01-functional-spec.md #  기능 요구사항(F-001~006·예외)
+│   │   ├── 02-business-logic.md  #  비즈니스 로직(BL/BR·의사코드)
+│   │   ├── 03-api-spec.md        #  API 명세(엔드포인트·응답·에러코드)
+│   │   ├── 04-erd.md             #  DB 테이블 정의(4테이블·관계도)
+│   │   ├── 05-appsintoss-refs.md #  앱인토스 SDK·테스트·출시·문서 URL
 │   │   └── 06-gemini-extraction-spec.md  # Gemini 추출 프롬프트·스키마·저장 매핑
 │   ├── adr/                   #   아키텍처 결정 기록(왜 이렇게 정했나)
 │   │   ├── 0001-backend-proxy-layer.md   # 백엔드 프록시를 둔 이유
 │   │   └── 0002-2step-fallback-lookup.md # 2단계 폴백 조회 결정
-│   └── design/                #   디자인(화면 흐름·시안)
-│       ├── 00-storyboard.md   #     [Figma] 화면 전환·라우팅 흐름
-│       ├── _screen-template.md#     [앱빌더] 화면 설계서 템플릿
-│       ├── figma-ref/         #     Figma 스토리보드 캡처
-│       └── appbuilder-ref/    #     앱빌더 추출 코드(참조용, RN으로 변환해 사용)
+│   └── design/                #   디자인 시안 및 코드
+│       ├── 01-screen-design-spec.md#    # 화면 설계서
+│       ├── design-token.md    # 디자인 참고 사항
+│       └── appbuilder-ref/    #     [앱빌더] 추출 코드(참조용, RN으로 변환해 사용)
 │
 ├── frontend/                  # ── React Native (Granite) ──
-│   ├── app/                   #   파일 기반 라우팅(= 00-storyboard 흐름)
-│   │   ├── index.tsx          #     로그인(F-001)
-│   │   ├── scan.tsx           #     스캔(F-002)
-│   │   ├── capture.tsx        #     촬영 폴백(F-003)
-│   │   ├── result/            #     결과(F-003)
-│   │   └── saved/             #     저장목록(F-005)
-│   ├── src/
-│   │   ├── screens/           #   화면 조립(얇게)
-│   │   ├── features/          #   기능 단위 흐름·상태 오케스트레이션
-│   │   ├── components/        #   TDS-RN 순수 프레젠테이션 컴포넌트
-│   │   ├── hooks/             #   상태·사이드이펙트(useScan/useLookup ...)
-│   │   ├── api/               #   백엔드 호출 + 에러코드→메시지
-│   │   └── lib/               #   순수 유틸(바코드 검증 등)
 │   ├── __tests__/             #   단위(unit) / 통합(integration) 테스트
-│   ├── ait.config.ts          #   앱인토스 빌드 설정
-│   └── package.json
+│   ├── .granite/              #   Granite 프레임워크 자동 생성 파일
+│   ├── .swc/                  #   SWC 컴파일러 캐시
+│   ├── pages/                 #   파일 기반 라우팅 (= 00-storyboard 흐름)
+│   ├── scripts/               #   빌드 및 유틸리티 스크립트
+│   ├── src/
+│   │   ├── api/               #   백엔드 호출 + 에러코드→메시지
+│   │   ├── components/        #   TDS-RN 순수 프레젠테이션 컴포넌트
+│   │   ├── features/          #   기능 단위 흐름·상태 오케스트레이션
+│   │   ├── hooks/             #   상태·사이드이펙트(useScan/useLookup ...)
+│   │   ├── lib/               #   순수 유틸(바코드 검증 등)
+│   │   ├── screens/           #   화면 조립(얇게)
+│   │   ├── utils/             #   기타 유틸리티 함수 모음
+│   │   ├── _app.tsx           #   앱 전역 설정 및 레이아웃
+│   │   ├── env.d.ts           #   환경 변수 타입 정의
+│   │   └── router.gen.ts      #   자동 생성된 라우터 타입
+│   ├── babel.config.js        #   Babel 설정 파일
+│   ├── CLAUDE.md              #   프론트엔드 전용 AI 작업 기억 및 규칙
+│   ├── granite.config.ts      #   앱인토스 Granite 프레임워크 빌드 설정
+│   ├── index.ts               #   애플리케이션 진입점(Entry Point)
+│   ├── jest.config.js         #   Jest 테스트 러너 설정 파일
+│   ├── jest.setup.ts          #   Jest 테스트 환경 초기화 설정
+│   ├── require.context.ts     #   동적 모듈 로딩 설정
+│   └── tsconfig.json          #   TypeScript 컴파일러 설정
 │
-└── backend/                   # ── Node.js 프록시(모든 로직·키) ──
-    ├── src/
-    │   ├── routes/            #   엔드포인트 ↔ controller 연결
-    │   ├── controllers/       #   HTTP 입출력만(검증·응답 포맷)
-    │   ├── services/          #   비즈니스 로직(BL-001~007)
-    │   ├── repositories/      #   Supabase 접근(users/community_products/saved/scan)
-    │   ├── clients/           #   외부 API(라쿠텐/gemini/번역/supabase)
-    │   ├── middleware/        #   auth/error/validate/ratelimit
-    │   ├── cache/             #   바코드 메모리 캐시(키=JAN)
-    │   └── config/            #   환경변수(키) 로딩
-    ├── tests/                 #   단위(unit) / 통합(integration)
-    └── package.json
+├── .env                       # 로컬 환경변수 (커밋 금지)
+├── .gitignore                 # .env, *.key, *.pem 등 시크릿 제외
+├── .mcp.json                  # MCP 서버 연결: apps-in-toss(ax) + supabase + figma
+├── CLAUDE.md                  # AI 작업 기억(항상 로드): 아키텍처·도메인규칙·MCP·git·보안
+├── commitlint.config.js       # 커밋 메시지 규칙(type + F-ID scope 필수)
+└── README.md                  # 이 파일 — 프로젝트 전체 안내
 ```
 
 ### 백엔드 계층 (단방향)
@@ -192,6 +213,8 @@ feat/be/F-003-lookup ──PR──▶ develop ──릴리스 PR──▶ main
 | `fix` | 버그 수정 | 잘못 동작하는 걸 고칠 때 | `fix(F-003): 라쿠텐 타임아웃 처리` |
 | `docs` | 문서 | README·스펙 등 문서만 바꿀 때 | `docs(readme): 구조 설명 추가` |
 | `chore` | 잡일·설정 | 빌드·설정·템플릿 등 코드 기능과 무관한 작업 | `chore(template): 이슈 템플릿 추가` |
+| `test` | 테스트 실행 | 각 기능 테스트 시  | `test(fe): 화면 렌더 스모크 추가` |
+| `style` | 스티일 추가 및 변경 | style 변경 시   | `style(fe): 레이아웃 수정` |
 
 > `feat` vs `fix` → 새로 만들면 feat, 있던 걸 고치면 fix /
 > `docs` vs `chore` → 문서 내용이면 docs, 설정·빌드·템플릿이면 chore
