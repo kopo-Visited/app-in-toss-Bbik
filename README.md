@@ -291,7 +291,7 @@ feat/be/F-003-lookup ──PR──▶ develop ──릴리스 PR──▶ main
 > push 거부 → pre-push 테스트 실패 또는 main·develop 직접 push 시도.
 
 ### 7.5 AI(Claude Code)로 작업할 때
-- `/implement-feature F-00X` (스펙확인→구현→테스트), `/commit` (점검→테스트→커밋), `/run-tests`.
+- (스펙확인→구현→테스트), `/commit` (점검→테스트→커밋).
 - push는 항상 사용자 확인 후. PR은 base=develop. 상세: `@.claude/skills/git-workflow/SKILL.md`.
 
 ---
@@ -299,7 +299,7 @@ feat/be/F-003-lookup ──PR──▶ develop ──릴리스 PR──▶ main
 ## 8. 테스트
 - 백엔드: 단위(services·BL/BR) + 통합(routes E2E, 외부는 nock 목).
 - 프론트: 단위(컴포넌트·훅·유틸) + 통합(MSW로 화면 흐름).
-- 외부 API는 항상 목(mock), 실호출 0. 예외코드마다 음성 테스트. 전체 실행 `/run-tests`.
+- 외부 API는 항상 목(mock), 실호출 0. 예외코드마다 음성 테스트. 전체 실행.
 
 ---
 
