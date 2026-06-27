@@ -1,5 +1,4 @@
 import { SafeAreaView, View, Text, Pressable, StyleSheet } from 'react-native';
-import { useNavigation } from '@granite-js/react-native';
 import { WifiSlashIcon } from './WifiSlashIcon';
 
 /**
@@ -10,18 +9,6 @@ import { WifiSlashIcon } from './WifiSlashIcon';
  * useNavigation 사용이 안전하다. 바가 상단을 차지하고, 콘텐츠는 남은 영역에서 세로 중앙 정렬.
  */
 export function NoInternetOverlay({ onRetry }: { onRetry: () => void }) {
-  const navigation = useNavigation();
-
-  const goBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('/');
-    }
-  };
-  const goHome = () => navigation.navigate('/');
-  const noop = () => {};
-
   return (
     <SafeAreaView style={styles.overlay}>
 

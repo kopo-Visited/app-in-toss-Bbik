@@ -8,7 +8,6 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
-import { useNavigation } from '@granite-js/react-native';
 import { useProductLookup } from '../hooks/useProductLookup';
 import { LoadingOverlay } from '../components/LoadingOverlay';
 import { NoInternetOverlay } from '../components/NoInternetOverlay';
@@ -23,20 +22,9 @@ import { NoInternetOverlay } from '../components/NoInternetOverlay';
  */
 
 export function ManualInputScreen() {
-  const navigation = useNavigation();
   const { run, loading, networkError } = useProductLookup();
   const [code, setCode] = useState('');
   const canSubmit = code.length === 13 || code.length === 8; // JAN-13 / JAN-8
-
-  const goBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('/');
-    }
-  };
-  const goHome = () => navigation.navigate('/');
-  const noop = () => {};
 
   const handleSubmit = () => {
     if (!canSubmit) {

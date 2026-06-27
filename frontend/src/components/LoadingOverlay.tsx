@@ -1,6 +1,5 @@
 // TODO(빌드): 원본 커스텀 arc 스피너(react-native-svg) → 현재 ActivityIndicator로 근사. 교체 검토.
 import { SafeAreaView, View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { useNavigation } from '@granite-js/react-native';
 
 /**
  * 전체화면 로딩 오버레이 (라우트 아님). 상단 내비바 + 스피너 + 안내 문구.
@@ -10,18 +9,6 @@ import { useNavigation } from '@granite-js/react-native';
  * useNavigation 사용이 안전하다. 바가 상단을 차지하고, 스피너+문구는 남은 영역에서 세로 중앙 정렬.
  */
 export function LoadingOverlay({ message = '상품 정보를\n불러오는 중 ...' }: { message?: string }) {
-  const navigation = useNavigation();
-
-  const goBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('/');
-    }
-  };
-  const goHome = () => navigation.navigate('/');
-  const noop = () => {};
-
   return (
     <SafeAreaView style={styles.overlay}>
       <View style={styles.center}>
