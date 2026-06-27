@@ -28,19 +28,8 @@ const PLACEHOLDER_IMG =
   'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/BtdmizRQHr/g8y00kk9_expires_30_days.png';
 
 export function ResultScreen({ product }: { product: Product }) {
-  const navigation = useNavigation();
   const { save, share } = useResultActions();
   const toast = useToast();
-
-  const goBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('/');
-    }
-  };
-  const goHome = () => navigation.navigate('/');
-  const noop = () => {};
 
   const isAi = product.lookupType === 'ai';
   const hasPrice = product.price != null && product.price !== 0;

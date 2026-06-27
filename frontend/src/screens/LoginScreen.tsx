@@ -7,7 +7,6 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Svg, Path } from 'react-native-svg';
-import { useNavigation } from '@granite-js/react-native';
 import { useLogin } from '../hooks/useLogin';
 
 /**
@@ -62,18 +61,7 @@ function BarcodeScanIllustration() {
 }
 
 export function LoginScreen() {
-  const navigation = useNavigation();
   const { login, loading } = useLogin();
-
-  const goBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('/');
-    }
-  };
-  const goHome = () => navigation.navigate('/');
-  const noop = () => {};
 
   return (
     <SafeAreaView style={styles.safeArea}>

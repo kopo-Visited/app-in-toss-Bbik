@@ -26,19 +26,6 @@ export function HomeScreen() {
   // 로그인 게이트: 미로그인이면 /login으로 보내고(useAuthGate 내부), 그동안 홈 본문은 렌더하지 않는다.
   const { authed } = useAuthGate();
 
-  // ScanScreen close 패턴과 동일: 스택 있으면 뒤로, 없으면 홈.
-  const goBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('/');
-    }
-  };
-
-  // 하트/더보기는 export에 동작 명세 없음 → 임의 기능 만들지 않고 no-op.
-  // TODO: 하트(찜)·더보기(메뉴) 동작 명세 확정 시 연결.
-  const noop = () => {};
-
   // 미로그인: 로그인 화면으로 리다이렉트 진행 중 → 홈 본문을 그리지 않아 번쩍임을 막는다.
   if (!authed) {
     return <SafeAreaView style={styles.safeArea} />;

@@ -34,16 +34,6 @@ export function SavedScreen() {
   const navigation = useNavigation();
   const { items, loading, error, remove, removeAll } = useSavedProducts();
 
-  const goBack = () => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('/');
-    }
-  };
-  const goHome = () => navigation.navigate('/');
-  const noop = () => {};
-
   const handleDelete = (item: SavedProduct) => {
     Alert.alert('삭제할까요?', `${item.nameKo}을(를) 저장 목록에서 지워요.`, [
       { text: '취소', style: 'cancel' },
