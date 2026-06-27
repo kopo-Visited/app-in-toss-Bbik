@@ -1,7 +1,6 @@
 // TODO(빌드): 원본 커스텀 arc 스피너(react-native-svg) → 현재 ActivityIndicator로 근사. 교체 검토.
 import { SafeAreaView, View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
-import { HomeTopNavBar } from './HomeTopNavBar';
 
 /**
  * 전체화면 로딩 오버레이 (라우트 아님). 상단 내비바 + 스피너 + 안내 문구.
@@ -25,7 +24,6 @@ export function LoadingOverlay({ message = '상품 정보를\n불러오는 중 .
 
   return (
     <SafeAreaView style={styles.overlay}>
-      <HomeTopNavBar onBack={goBack} onClose={goHome} onHeart={noop} onMore={noop} />
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#3182F6" />
         <Text style={styles.message}>{message}</Text>

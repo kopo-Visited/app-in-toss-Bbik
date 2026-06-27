@@ -5,7 +5,7 @@ import type { Product } from '../src/lib/product';
 export const Route = createRoute('/result', {
   validateParams: (params) => params as { product: Product },
   component: ResultPage,
-  screenOptions: { headerShown: false },
+  screenOptions: { headerShown: true },
 });
 
 function ResultPage() {

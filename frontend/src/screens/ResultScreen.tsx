@@ -7,10 +7,9 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
-import { useNavigation } from '@granite-js/react-native';
-import { HomeTopNavBar } from '../components/HomeTopNavBar';
 import { useResultActions } from '../hooks/useResultActions';
 import { useToast } from '../hooks/useToast';
+import { requestReviewOnce } from '../utils/requestReviewOnce';
 import { Toast } from '../components/Toast';
 import { formatPrice } from '../lib/product';
 import type { Product } from '../lib/product';
@@ -49,12 +48,17 @@ export function ResultScreen({ product }: { product: Product }) {
   const brandKo = product.brandNameKo ?? product.brandNameOriginal ?? '';
   const brandJp = product.brandNameKo && product.brandNameOriginal ? ` (${product.brandNameOriginal})` : '';
 
-  const onSave = async () => toast.show(await save(product));
+  const onSave = async () => {
+    const message = await save(product);
+    toast.show(message);
+    await requestReviewOnce(); // 리뷰 요청은 저장 후 1회만. 실패해도 무시.
+  };
+
   const onShare = async () => toast.show(await share(product));
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <HomeTopNavBar onBack={goBack} onClose={goHome} onHeart={noop} onMore={noop} />
+
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 이미지 카드 */}

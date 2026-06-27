@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 import { Svg, Path } from 'react-native-svg';
 import { useNavigation } from '@granite-js/react-native';
-import { HomeTopNavBar } from '../components/HomeTopNavBar';
 import { useLogin } from '../hooks/useLogin';
 
 /**
@@ -78,7 +77,6 @@ export function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <HomeTopNavBar onBack={goBack} onClose={goHome} onHeart={noop} onMore={noop} />
 
       <View style={styles.content}>
         {/* 상단: 바코드 스캔 일러스트 + 타이틀 + 부제 */}

@@ -4,5 +4,5 @@ import { ManualInputScreen } from '../src/screens/ManualInputScreen';
 export const Route = createRoute('/manual-input', {
   validateParams: (params) => params,
   component: ManualInputScreen,
-  screenOptions: { headerShown: false },
+  screenOptions: { headerShown: true },
 });

@@ -4,5 +4,5 @@ import { HomeScreen } from '../src/screens/HomeScreen';
 export const Route = createRoute('/', {
   validateParams: (params) => params,
   component: HomeScreen,
-  screenOptions: { headerShown: false },
+  screenOptions: { headerShown: true },
 });
