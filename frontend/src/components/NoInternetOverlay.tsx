@@ -1,6 +1,5 @@
 import { SafeAreaView, View, Text, Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
-import { HomeTopNavBar } from './HomeTopNavBar';
 import { WifiSlashIcon } from './WifiSlashIcon';
 
 /**
@@ -25,7 +24,6 @@ export function NoInternetOverlay({ onRetry }: { onRetry: () => void }) {
 
   return (
     <SafeAreaView style={styles.overlay}>
-      <HomeTopNavBar onBack={goBack} onClose={goHome} onHeart={noop} onMore={noop} />
 
       <View style={styles.center}>
         <View style={styles.iconBox}>

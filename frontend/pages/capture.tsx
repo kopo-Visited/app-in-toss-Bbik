@@ -4,7 +4,7 @@ import { CaptureScreen } from '../src/screens/CaptureScreen';
 export const Route = createRoute('/capture', {
   validateParams: (params) => params as { barcode?: string; scanHistoryId?: string },
   component: CapturePage,
-  screenOptions: { headerShown: false },
+  screenOptions: { headerShown: true },
 });
 
 function CapturePage() {

@@ -6,7 +6,6 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
-import { HomeTopNavBar } from '../components/HomeTopNavBar';
 import { BarcodeScanHero } from '../components/BarcodeScanHero';
 import { useAuthGate } from '../hooks/useAuthGate';
 
@@ -47,7 +46,6 @@ export function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <HomeTopNavBar onBack={goBack} onClose={goBack} onHeart={noop} onMore={noop} />
 
       <View style={styles.body}>
         {/* 상단 인사 (디자인 스펙 S-2 "상단 인사"): "안녕하세요"(큰 글씨) + "무엇을 스캔해볼까요?" */}

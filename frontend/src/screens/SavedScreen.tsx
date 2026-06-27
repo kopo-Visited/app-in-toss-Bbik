@@ -10,7 +10,6 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
-import { HomeTopNavBar } from '../components/HomeTopNavBar';
 import { useSavedProducts } from '../hooks/useSavedProducts';
 import { getUserName } from '../api/session';
 import { TrashIcon } from '../components/TrashIcon';
@@ -81,7 +80,6 @@ export function SavedScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <HomeTopNavBar onBack={goBack} onClose={goHome} onHeart={noop} onMore={noop} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 로그인 응답의 name 바인딩(세션). 미확보 시 '회원'으로 폴백. */}

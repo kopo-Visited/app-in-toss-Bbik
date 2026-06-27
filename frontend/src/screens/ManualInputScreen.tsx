@@ -9,7 +9,6 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@granite-js/react-native';
-import { HomeTopNavBar } from '../components/HomeTopNavBar';
 import { useProductLookup } from '../hooks/useProductLookup';
 import { LoadingOverlay } from '../components/LoadingOverlay';
 import { NoInternetOverlay } from '../components/NoInternetOverlay';
@@ -48,7 +47,6 @@ export function ManualInputScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <HomeTopNavBar onBack={goBack} onClose={goHome} onHeart={noop} onMore={noop} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 큰 제목 */}
