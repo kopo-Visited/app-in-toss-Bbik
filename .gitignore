@@ -1,5 +1,29 @@
 # secrets / credentials
 .env
 .env.*
+!.env.example
 *.key
 *.pem
+*.crt
+backend/secrets/
+
+# dependencies
+node_modules/
+
+# logs
+*.log
+npm-debug.log*
+
+# build / coverage
+dist/
+build/
+coverage/
+
+# granite (frontend) build cache / 빌드 산출물
+frontend/.granite/
+frontend/*.ait
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,33 @@
+{
+  "name": "bbik-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "삑(Bbik) 백엔드 프록시 — 토스/라쿠텐/Gemini/번역/Supabase 연동",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "lint": "echo \"no linter configured yet\" && exit 0",
+    "test": "vitest run",
+    "test:integration": "vitest run tests/integration",
+    "test:unit": "vitest run tests/unit",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "@undecaf/zbar-wasm": "^0.11.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "jimp": "^1.6.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "bwip-js": "^4.11.1",
+    "nock": "^14.0.15",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.9"
+  }
+}

@@ -13,15 +13,16 @@
 | No | 기능ID | API명 | Method | Endpoint | 설명 | 우선순위 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | F-001 | 토스 로그인 API | POST | `/api/auth/toss/login` | 토스 SDK 인증 결과 기반 사용자 식별 | 필수 |
-| 2 | F-003 | 상품 정보 조회 API | GET | `/api/products/lookup` | 바코드 기반 메모리 캐시 확인 후 라쿠텐 JAN 조회 | 필수 |
-| 3 | F-003 | 상품 이미지 기반 보완 조회 API | POST | `/api/products/analyze-image` | JAN 조회 실패 시 상품명·브랜드명 이미지를 촬영하고, 추출·번역된 키워드로 라쿠텐 재조회를 수행한다. 키워드 재조회 실패 시에만 AI 이미지 인식 결과를 반환한다. | 필수 |
-| 4 | F-004 | 상품 저장 API | POST | `/api/saved-products` | 사용자가 선택한 상품을 저장 목록에 추가 | 권장 |
-| 5 | F-005 | 저장 목록 조회 API | GET | `/api/saved-products` | 저장 상품 목록 조회 | 권장 |
-| 6 | F-005 | 저장 상품 개별 삭제 API | DELETE | `/api/saved-products/{savedProductId}` | 저장 상품 개별 삭제 | 권장 |
-| 7 | F-005 | 저장 상품 전체 삭제 API | DELETE | `/api/saved-products` | 사용자 저장 상품 전체 삭제 | 권장 |
-| 8 | F-006 | 공유 데이터 생성 API | POST | `/api/share/products` | 공유용 텍스트 또는 이미지 데이터 생성 | 선택 |
+| 2 | F-002 | 바코드 이미지 디코딩 API | POST | `/api/products/decode-barcode` | 앱인토스에 실시간 바코드 스캐너가 없어, 촬영 이미지에서 JAN/EAN 숫자를 백엔드가 디코드한다(EAN 체크디지트 검증). 미검출 시 직접 입력 유도. | 필수 |
+| 3 | F-003 | 상품 정보 조회 API | GET | `/api/products/lookup` | 바코드 기반 메모리 캐시 확인 후 라쿠텐 JAN 조회 | 필수 |
+| 4 | F-003 | 상품 이미지 기반 보완 조회 API | POST | `/api/products/analyze-image` | JAN 조회 실패 시 상품명·브랜드명 이미지를 촬영하고, 추출·번역된 키워드로 라쿠텐 재조회를 수행한다. 키워드 재조회 실패 시에만 AI 이미지 인식 결과를 반환한다. | 필수 |
+| 5 | F-004 | 상품 저장 API | POST | `/api/saved-products` | 사용자가 선택한 상품을 저장 목록에 추가 | 권장 |
+| 6 | F-005 | 저장 목록 조회 API | GET | `/api/saved-products` | 저장 상품 목록 조회 | 권장 |
+| 7 | F-005 | 저장 상품 개별 삭제 API | DELETE | `/api/saved-products/{savedProductId}` | 저장 상품 개별 삭제 | 권장 |
+| 8 | F-005 | 저장 상품 전체 삭제 API | DELETE | `/api/saved-products` | 사용자 저장 상품 전체 삭제 | 권장 |
+| 9 | F-006 | 공유 데이터 생성 API | POST | `/api/share/products` | 공유용 텍스트 또는 이미지 데이터 생성 | 선택 |
 
-※ F-002 바코드 스캔은 React Native 카메라 기반 프론트엔드 기능이며, 서버 API는 스캔된 JAN 코드를 전달받는 F-003부터 시작한다.
+※ F-002 바코드 스캔은 원래 RN 네이티브 디코더 기반 FE 기능으로 설계되었으나, 앱인토스 Granite 환경에 실시간 스캐너 API가 없어 **촬영 이미지를 백엔드가 디코드하는 방식**(`POST /api/products/decode-barcode`)으로 보완한다. FE는 `openCamera` 촬영 → 본 API로 JAN 확보 → F-003 흐름 진입. 직접 입력 경로는 그대로 유지한다.
 
 ---
 
@@ -72,6 +73,7 @@
 | `INVALID_REQUEST` | 요청 형식이 올바르지 않음 |
 | `UNAUTHORIZED` | 사용자 인증 실패 |
 | `INVALID_BARCODE` | 바코드 형식이 올바르지 않음 |
+| `BARCODE_NOT_DETECTED` | 촬영 이미지에서 바코드를 검출하지 못함 (F-002, 422) |
 | `PRODUCT_NOT_FOUND` | 상품 조회 결과 없음 |
 | `EXTERNAL_API_ERROR` | 외부 API 호출 실패 |
 | `AI_ANALYSIS_FAILED` | Gemini 분석 실패 |
@@ -85,6 +87,7 @@
 | --- | --- | --- |
 | `CAPTURE_PRODUCT_IMAGE` | 상품명·브랜드명이 보이도록 촬영 화면으로 이동 | `POST /api/products/analyze-image` |
 | `RETRY_SCAN` | 바코드 재스캔 유도 | 프론트 처리 |
+| `MANUAL_INPUT` | 바코드 직접 입력 화면으로 이동 (F-002 디코드 실패) | 프론트 처리 |
 | `NONE` | 별도 후속 동작 없음 | 없음 |
 
 ---
@@ -101,8 +104,8 @@
 | API명 | 토스 로그인 API |
 | Method | POST |
 | Endpoint | `/api/auth/toss/login` |
-| 인증 필요 여부 | 불필요 |
-| 연동 | 토스 SDK, Supabase |
+| 인증 필요 여부 | 불필요(이 API가 우리 인증을 발급) |
+| 연동 | 앱인토스 OAuth(`generate-token`·`login-me`, mTLS), Supabase |
 
 ### 5.2 Request
 
@@ -112,7 +115,8 @@ POST /api/auth/toss/login
 
 ```json
 {
-  "tossUserKey": "{toss_user_key}"
+  "authorizationCode": "{authorization_code}",
+  "referrer": "DEFAULT"
 }
 ```
 
@@ -120,29 +124,57 @@ POST /api/auth/toss/login
 
 | 필드 | 타입 | 필수 여부 | 설명 |
 | --- | --- | --- | --- |
-| `tossUserKey` | String | 필수 | 토스 SDK에서 전달받은 사용자 식별값 |
+| `authorizationCode` | String | 필수 | 토스 SDK `appLogin()`이 반환한 인가코드. **유효 10분·일회성**(재사용 시 `invalid_grant`) |
+| `referrer` | String(enum) | 필수 | `appLogin()`이 함께 반환한 referrer. **`'DEFAULT'` 제 토스앱** `generate-token`에 그대로 전달 |
 
-### 5.4 Response
+> 변경: 기존 `tossUserKey`(프론트 전달)는 불가. userKey는 백엔드가 `login-me`로만 얻으므로 요청은 `authorizationCode`를 전달한다.
+> 
+
+### 5.4 내부 처리 흐름 (서버 ↔ 앱인토스, **mTLS 필수**)
+
+Base URL: `https://apps-in-toss-api.toss.im`
+
+1. **토큰 발급** — `POST /api-partner/v1/apps-in-toss/user/oauth2/generate-token`, body `{ authorizationCode, referrer }`
+→ `{ resultType: "SUCCESS", success: { accessToken(1h), refreshToken(14d), tokenType, expiresIn, scope } }` (응답은 `resultType`/`success` 래퍼 → `success` 언래핑)
+2. **사용자 조회** — `GET /api-partner/v1/apps-in-toss/user/oauth2/login-me`, header `Authorization: Bearer {accessToken}`
+→ `{ userKey(number), scope, agreedTerms, name, phone, birthday, ci, gender ... }` (개인정보 필드는 **암호문**)
+3. **개인정보 복호화** — `name`을 콘솔 발급 키 + AAD로 **AES-256-GCM 복호화** → `users.name`에 저장
+4. **식별/등록(BL-001)** — `String(userKey)`로 `users` 조회/등록(`users.toss_user_key`) → **자체 JWT** 발급
+
+주의사항:
+
+- **mTLS 인증서 필수** — 없으면 `generate-token` 호출 불가(integration-process 문서의 발급 절차).
+- **응답 래퍼** — `generate-token`은 `{ resultType, success }` 구조. `success`를 까서 매핑한다.
+- **`userKey`는 number** — 예: `443731104`. `users.toss_user_key`에는 **문자열로 보관** 권장.
+- **개인정보는 전부 암호문** — `name`/`phone`/`birthday`/`ci` 등은 암호화 제공. **복호화 키·AAD는 콘솔 발급분을 `config`(환경변수)로 보관**, AES-256-GCM 복호화. (삑은 `name`만 채움)
+- 토스 `accessToken`/`refreshToken`은 **서버에서만** 보관, 클라이언트 전달 금지.
+- `scope`에 정의되지 않은 값이 와도 예외 없이 처리(2026-01-02 `user_key` 추가 등 전방호환).
+
+### 5.5 Response
 
 ```json
 {
   "success": true,
   "data": {
     "userId": "{user_id}",
-    "tossUserKey": "{toss_user_key}",
     "isNewUser": false,
-    "accessToken": "{access_token}"
+    "accessToken": "{our_jwt_access_token}",
+    "name": "{decrypted_user_name}"
   }
 }
 ```
 
-### 5.5 예외 처리
+- `name`: 복호화된 사용자 이름 (F-005 저장목록 타이틀 `OO님의 저장한 상품`용). **본인에게 본인 이름만** 반환하므로 PII 노출 안전(인증된 응답). 미확보 시 `토스사용자`. dev-bypass 경로는 `테스트사용자`.
+
+### 5.6 예외 처리
 
 | 코드 | 원인 | 처리 방법 |
 | --- | --- | --- |
 | `F-001-E1` | 토스 앱 미설치 | 토스 앱 설치 유도 |
 | `F-001-E2` | 네트워크 오류 | 네트워크 확인 메시지 표시 |
 | `F-001-E3` | 인증 취소 | 로그인 화면으로 복귀 |
+| `F-001-E4` | 인가코드 만료·재사용(`invalid_grant`) | 재로그인 유도 |
+| `UNAUTHORIZED` | `generate-token`/`login-me` 실패 | 인증 실패 응답 |
 
 ---
 
@@ -385,16 +417,21 @@ GET https://openapi.rakuten.co.jp/ichibaproduct/api/Product/Search/20250801?form
 
 ### 10.2 Request
 
+두 가지 형식을 모두 받는다. 앱인토스 `openCamera`는 file:// 가 아닌 base64/데이터 URI를 주므로 RN 멀티파트 업로드가 불안정 → **JSON base64 권장**.
+
 ```
 POST /api/products/analyze-image
-Content-Type: multipart/form-data
+Content-Type: multipart/form-data        # (1) 멀티파트 파일
+# 또는
+Content-Type: application/json           # (2) JSON base64
+{ "image": "<base64 또는 dataURI>", "barcode": "...", "scanHistoryId": "..." }
 ```
 
 ### 10.3 Request Body
 
 | 필드 | 타입 | 필수 여부 | 설명 |
 | --- | --- | --- | --- |
-| `image` | File | 필수 | 상품명과 브랜드명이 보이는 상품 이미지 |
+| `image` | File 또는 String(base64) | 필수 | 상품명·브랜드명이 보이는 상품 이미지. 멀티파트 파일 또는 base64 문자열(순수 base64/`data:image/...;base64,` 둘 다 허용) |
 | `scanHistoryId` | String | 필수 | `/lookup` 실패 응답에서 전달받은 스캔 기록 ID |
 | `barcode` | String | 필수 | 최초 스캔한 JAN 코드 |
 
@@ -761,3 +798,76 @@ DELETE /api/saved-products
 | 데이터 | Supabase 저장, 사용자별 접근 제어 적용 |
 | 캐시 | 동일 바코드 조회 결과는 서버 메모리에 임시 캐싱한다. 메모리 캐시는 외부 API 호출량을 줄이기 위한 백엔드 내부 처리이며, 서버 재시작 시 초기화될 수 있다. 캐시 사용 여부는 API 응답 필드에 포함하지 않는다. |
 | 오프라인 | 네트워크 미연결 시 스캔 비활성화 및 안내 표시 |
+
+---
+
+## 18. F-002 바코드 이미지 디코딩 API
+
+앱인토스 Granite 환경에는 실시간 바코드 스캐너 API/네이티브 모듈이 없고 `openCamera`(사진 촬영)만 제공된다. 따라서 촬영한 바코드 이미지를 백엔드로 전송하면, 백엔드가 이미지에서 JAN/EAN 숫자를 디코드해 반환한다. 반환된 바코드로 이후 F-003(`/api/products/lookup`) 흐름을 진행한다.
+
+본 API는 DB·메모리 캐시·`scan_history`를 건드리지 않는 **무상태 유틸**이다. 스캔 이력은 후속 `/api/products/lookup` 호출 시점에 생성된다.
+
+### 18.1 기본 정보
+
+| 항목 | 값 |
+| --- | --- |
+| Endpoint | `/api/products/decode-barcode` |
+| Method | POST |
+| 인증 | 필요 (`Authorization: Bearer {accessToken}`) |
+| Content-Type | `multipart/form-data` |
+
+### 18.2 Request Body (multipart 또는 JSON base64)
+
+멀티파트 파일 또는 JSON base64 둘 다 받는다. 앱인토스 `openCamera`가 file:// 가 아닌 base64를 주므로 **JSON base64 권장**.
+
+```
+Content-Type: multipart/form-data    # (1) field `image`: 이미지 파일
+# 또는
+Content-Type: application/json       # (2) { "image": "<base64 또는 dataURI>" }
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+| --- | --- | --- | --- |
+| `image` | file 또는 String(base64) | O | 바코드 촬영 이미지. 멀티파트 파일(≤10MB) 또는 base64 문자열(순수/`data:image/...;base64,` 둘 다) |
+
+### 18.3 처리 절차
+
+| 순서 | 처리 내용 |
+| --- | --- |
+| 0 | 이미지 입력 정규화: 멀티파트 파일 또는 JSON `image`(base64/dataURI) → 버퍼 |
+| 1 | 이미지 수신(multer 메모리/base64 디코드) → 이미지 디코딩 라이브러리로 그레이스케일/픽셀 변환 |
+| 2 | zbar(WASM)로 1D 바코드 심볼 검출, EAN-13 / EAN-8 만 채택 (BR-001) |
+| 3 | 검출값 EAN 체크디지트 검증으로 오인식 차단 (BR-001) |
+| 4 | 유효값 → 성공 응답, 미검출 → `BARCODE_NOT_DETECTED` (직접 입력 유도) |
+
+### 18.4 Response
+
+성공:
+
+```json
+{
+  "success": true,
+  "data": { "barcode": "4901008315997" }
+}
+```
+
+미검출(직접 입력 폴백):
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "BARCODE_NOT_DETECTED",
+    "message": "바코드를 인식하지 못했어요. 직접 입력해주세요.",
+    "nextAction": "MANUAL_INPUT"
+  }
+}
+```
+
+### 18.5 예외 처리
+
+| 코드 | 원인 | HTTP | nextAction |
+| --- | --- | --- | --- |
+| `INVALID_REQUEST` | `image` 파일 누락 / 이미지 아님 | 400 | NONE |
+| `UNAUTHORIZED` | 토큰 없음·만료 | 401 | NONE |
+| `BARCODE_NOT_DETECTED` | 이미지에서 유효한 EAN 미검출(손상 이미지 포함) | 422 | MANUAL_INPUT |

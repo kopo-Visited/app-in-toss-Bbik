@@ -1,0 +1,23 @@
+# 삑 백엔드 Fly.io 앱 설정. 워크플로: flyctl deploy --remote-only -a bbik-api
+app = "bbik-api"
+primary_region = "nrt"  # 도쿄 — 라쿠텐(일본) API 근접
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # 콜드스타트 완전 제거(테스트 단계): 머신을 절대 끄지/멈추지 않는다.
+  # suspend+min=1 로는 suspend 된 머신으로 라우팅 시 재개에 ~4초가 걸려 "오래 로딩"이 남았다.
+  # false = 항상 풀 가동 → 첫 요청도 즉시 응답. (출시 후 트래픽 보고 비용 위해 재조정 가능)
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
